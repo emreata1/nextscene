@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1087869566923",
+    "project_id": "nextscene-179df",
+    "storage_bucket": "nextscene-179df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1087869566923:android:9b37ef8433c5792d57804e",
+        "android_client_info": {
+          "package_name": "com.example.nextscene"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALitGuKhxoJLu_AO4lrN-LYehrMekcZ3E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
