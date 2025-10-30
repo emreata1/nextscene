@@ -22,6 +22,7 @@ fun AuthScreen(
     val coroutineScope = rememberCoroutineScope()
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
     var isRegisterMode by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(authState.isSuccess) {
@@ -50,6 +51,18 @@ fun AuthScreen(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
+        // Kayıt modundaysa kullanıcı adı alanını göster
+        if (isRegisterMode) {
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Kullanıcı Adı") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -58,6 +71,7 @@ fun AuthScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true
         )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
@@ -69,6 +83,7 @@ fun AuthScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true
         )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         authState.errorMessage?.let {
@@ -84,14 +99,18 @@ fun AuthScreen(
                 if (email.isNotBlank() && password.isNotBlank()) {
                     coroutineScope.launch {
                         if (isRegisterMode) {
-                            authViewModel.registerUser(email, password)
+                            if (username.isNotBlank()) {
+                                authViewModel.registerUser(email, password, username)
+                            }
                         } else {
                             authViewModel.loginUser(email, password)
                         }
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
             enabled = !authState.isLoading
         ) {
             if (authState.isLoading) {

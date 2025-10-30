@@ -1,3 +1,5 @@
+@file:Suppress("PropertyName")
+
 package com.example.nextscene.data
 
 import android.annotation.SuppressLint

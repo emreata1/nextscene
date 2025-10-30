@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,21 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.nextscene.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.math.floor
 
 @Composable
-fun MovieDetailScreen(
-    viewModel: MovieDetailViewModel = viewModel(),
+fun SeriesDetailScreen(
+    viewModel: SeriesDetailViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
 ) {
     val movieDetail by viewModel.movieDetail.collectAsState()
@@ -77,14 +75,22 @@ fun MovieDetailScreen(
             Text(text = detail.Plot, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(modifier = Modifier.padding(bottom = 16.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(bottom = 16.dp),
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "IMDb Rating: ", style = MaterialTheme.typography.bodyLarge)
                 StarRating(imdbRating = detail.imdbRating)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = detail.imdbRating, style = MaterialTheme.typography.bodyLarge)
             }
-            Divider(modifier = Modifier.padding(top = 16.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 16.dp),
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
+            )
             Text(text = "Rated: ${detail.Rated}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Director: ${detail.Director}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Actors: ${detail.Actors}", style = MaterialTheme.typography.bodyLarge)
@@ -102,7 +108,7 @@ fun MovieDetailScreen(
                     onClick = {
                         currentUser?.uid?.let { uid ->
                             CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addFavoriteMovie(uid, detail.imdbID)
+                                authViewModel.addFavoriteSeries(uid, detail.imdbID)
                             }
                         }
                     },
@@ -117,7 +123,7 @@ fun MovieDetailScreen(
                     onClick = {
                         currentUser?.uid?.let { uid ->
                             CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addWatchedMovie(uid, detail.imdbID)
+                                authViewModel.addWatchedSeries(uid, detail.imdbID)
                             }
                         }
                     },
@@ -125,7 +131,7 @@ fun MovieDetailScreen(
                 ) {
                     Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("İzlendi Olarak İşaretle films", color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("İzlendi Olarak İşaretledizi", color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
 
@@ -135,36 +141,4 @@ fun MovieDetailScreen(
     }
 }
 
-@Composable
-fun StarRating(imdbRating: String) {
-    val ratingFloat = imdbRating.toFloatOrNull() ?: 0f
-    val ratingOutOf5 = ratingFloat / 2f
-    val fullStars = floor(ratingOutOf5).toInt()
-    val hasHalfStar = (ratingOutOf5 - fullStars) >= 0.5f
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        repeat(fullStars) {
-            Image(
-                painter = painterResource(R.drawable.star_full),
-                contentDescription = null,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-
-        if (hasHalfStar) {
-            Image(
-                painter = painterResource(R.drawable.star_half),
-                contentDescription = null,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-
-        repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
-            Image(
-                painter = painterResource(R.drawable.star_empty),
-                contentDescription = null,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-    }
-}

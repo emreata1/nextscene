@@ -25,8 +25,8 @@ import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = viewModel()) {
-    val series by viewModel.series.collectAsState()
+fun MoviesScreen(navController: NavController, viewModel: MoviesViewModel = viewModel()) {
+    val films by viewModel.films.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -39,12 +39,12 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Dizi Ara") },
+            label = { Text("Film Ara") },
             singleLine = true,
             trailingIcon = {
                 IconButton(onClick = {
                     if (searchQuery.isNotBlank()) {
-                        viewModel.fetchSeries(searchQuery)
+                        viewModel.fetchFilms(searchQuery)
                     }
                 }) {
                     Icon(Icons.Default.Search, contentDescription = "Ara")
@@ -56,7 +56,7 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
             keyboardActions = KeyboardActions(
                 onSearch = {
                     if (searchQuery.isNotBlank()) {
-                        viewModel.fetchSeries(searchQuery)
+                        viewModel.fetchFilms(searchQuery)
                     }
                 }
             ),
@@ -65,10 +65,10 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
                 .padding(bottom = 12.dp)
         )
 
-        // 📺 Dizi Listesi
-        if (series.isEmpty()) {
+        // 🎬 Film Listesi
+        if (films.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Dizi bulunamadı.")
+                Text(text = "Film bulunamadı.")
             }
         } else {
             LazyVerticalGrid(
@@ -77,19 +77,19 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(series) { tvShow ->
+                items(films) { movie ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(2f / 3f)
                             .clickable {
-                                navController.navigate("detailseries/${tvShow.imdbID}")
+                                navController.navigate("detailmovie/${movie.imdbID}")
                             }
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Image(
-                                painter = rememberAsyncImagePainter(tvShow.Poster),
-                                contentDescription = "Dizi Posteri",
+                                painter = rememberAsyncImagePainter(movie.Poster),
+                                contentDescription = "Film Posteri",
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
@@ -97,12 +97,12 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
                                 contentScale = ContentScale.Crop
                             )
                             Text(
-                                text = tvShow.Title,
+                                text = movie.Title,
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                             Text(
-                                text = tvShow.Year,
+                                text = movie.Year,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }

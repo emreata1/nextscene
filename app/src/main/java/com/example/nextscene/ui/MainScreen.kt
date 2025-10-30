@@ -1,25 +1,20 @@
 package com.example.nextscene.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.nextscene.ui.theme.NextsceneTheme
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -56,7 +51,7 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(navController = navController, startDestination = Screen.Series.route, modifier = Modifier.padding(innerPadding)) {
             composable(Screen.Series.route) { SeriesScreen(navController = navController) }
-            composable(Screen.Films.route) { FilmsScreen(navController = navController) }
+            composable(Screen.Films.route) { MoviesScreen(navController = navController) }
             composable(Screen.Favorites.route) { FavoritesScreen() }
             composable(Screen.Auth.route) {
                 val currentUser = authViewModel.getCurrentUser()
@@ -89,13 +84,28 @@ fun MainScreen() {
 
             composable(Screen.Settings.route) { SettingsScreen() }
             composable(
-                route = Screen.Detail.route,
-                arguments = Screen.Detail.navArguments
+                route = Screen.DetailMovie.route,
+                arguments = Screen.DetailMovie.navArguments
             ) { backStackEntry ->
                 val imdbID = backStackEntry.arguments?.getString("imdbID")
                 if (imdbID != null) {
                     MovieDetailScreen()
-                } else {
+                }
+            }
+            composable(
+                route = Screen.DetailSeries.route,
+                arguments = Screen.DetailSeries.navArguments
+            ) { backStackEntry ->
+                val imdbID = backStackEntry.arguments?.getString("imdbID")
+                if (imdbID != null) {
+                    SeriesDetailScreen()
+                }
+            }
+
+            composable("openProfile/{uid}") { backStackEntry ->
+                val uid = backStackEntry.arguments?.getString("uid")
+                if (uid != null) {
+                    OpenProfileScreen()
                 }
             }
         }

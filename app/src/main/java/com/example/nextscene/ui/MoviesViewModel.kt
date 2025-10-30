@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class FilmsViewModel : ViewModel() {
+class MoviesViewModel : ViewModel() {
 
     private val _films = MutableStateFlow<List<Movie>>(emptyList())
     val films: StateFlow<List<Movie>> = _films
 
     init {
-        fetchFilms("star wars") // Örnek arama sorgusu
+        fetchFilms("star")
     }
 
     fun fetchFilms(query: String) {
@@ -23,7 +23,6 @@ class FilmsViewModel : ViewModel() {
                 val response = NetworkModule.omdbApiService.searchMovies(query, type = "movie", apiKey = NetworkModule.getApiKey())
                 _films.value = response.Search
             } catch (e: Exception) {
-                // Hata yönetimi
                 e.printStackTrace()
             }
         }
