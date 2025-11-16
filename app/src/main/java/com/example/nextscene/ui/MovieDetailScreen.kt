@@ -9,12 +9,15 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color // Added import
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,18 +26,34 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.nextscene.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+// Removed unused CoroutineScope, Dispatchers, launch imports
 import kotlin.math.floor
+
+import androidx.lifecycle.SavedStateHandle // Needed for initializer approach
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 @Composable
 fun MovieDetailScreen(
-    viewModel: MovieDetailViewModel = viewModel(),
+    // The authViewModel is now passed to the MovieDetailViewModel via the factory
     authViewModel: AuthViewModel = viewModel()
 ) {
+    // Create the MovieDetailViewModel using a custom factory to inject AuthViewModel
+    val viewModel: MovieDetailViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                // Access SavedStateHandle from the initializer scope
+                MovieDetailViewModel(
+                    savedStateHandle = createSavedStateHandle(),
+                    authViewModel = authViewModel
+                )
+            }
+        }
+    )
+
     val movieDetail by viewModel.movieDetail.collectAsState()
-    val currentUser = authViewModel.getCurrentUser()
+    // val currentUser = authViewModel.getCurrentUser() // No longer directly used for toggling, kept for other potential uses
 
     Column(
         modifier = Modifier
@@ -77,14 +96,22 @@ fun MovieDetailScreen(
             Text(text = detail.Plot, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(modifier = Modifier.padding(bottom = 16.dp))
+            HorizontalDivider( // Changed Divider to HorizontalDivider
+                modifier = Modifier.padding(bottom = 16.dp),
+                thickness = DividerDefaults.Thickness, // Added thickness
+                color = DividerDefaults.color // Added color
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "IMDb Rating: ", style = MaterialTheme.typography.bodyLarge)
                 StarRating(imdbRating = detail.imdbRating)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = detail.imdbRating, style = MaterialTheme.typography.bodyLarge)
             }
-            Divider(modifier = Modifier.padding(top = 16.dp))
+            HorizontalDivider( // Changed Divider to HorizontalDivider
+                modifier = Modifier.padding(top = 16.dp),
+                thickness = DividerDefaults.Thickness, // Added thickness
+                color = DividerDefaults.color // Added color
+            )
             Text(text = "Rated: ${detail.Rated}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Director: ${detail.Director}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Actors: ${detail.Actors}", style = MaterialTheme.typography.bodyLarge)
@@ -100,32 +127,46 @@ fun MovieDetailScreen(
             ) {
                 Button(
                     onClick = {
-                        currentUser?.uid?.let { uid ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addFavoriteMovie(uid, detail.imdbID)
-                            }
-                        }
+                        viewModel.toggleFavorite()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (detail.isFavorite) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+                    )
                 ) {
-                    Icon(Icons.Filled.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(
+                        if (detail.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = if (detail.isFavorite) "Favorilerden Çıkar" else "Favorilere Ekle",
+                        tint = if (detail.isFavorite) Color.White else MaterialTheme.colorScheme.onPrimary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Favorilere Ekle", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        if (detail.isFavorite) "Favorilerde" else "Favorilere Ekle",
+                        color = if (detail.isFavorite) Color.White else MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
 
                 Button(
                     onClick = {
-                        currentUser?.uid?.let { uid ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addWatchedMovie(uid, detail.imdbID)
-                            }
-                        }
+                        viewModel.toggleWatched()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (detail.isWatched) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
+                    )
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary)
+                    Icon(
+                        if (detail.isWatched) Icons.Filled.Check else Icons.Outlined.Check,
+                        contentDescription = if (detail.isWatched) "İzlendi Olarak İşaretli" else "İzlendi Olarak İşaretle",
+                        tint = if (detail.isWatched) Color.White else MaterialTheme.colorScheme.onSecondary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("İzlendi Olarak İşaretle films", color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        if (detail.isWatched) "İzlendi" else "İzlendi Olarak İşaretle",
+                        color = if (detail.isWatched) Color.White else MaterialTheme.colorScheme.onSecondary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
             }
 

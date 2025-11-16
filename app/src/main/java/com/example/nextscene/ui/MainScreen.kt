@@ -67,18 +67,7 @@ fun MainScreen() {
                         }
                     )
                 } else {
-                    ProfileScreen(
-                        userEmail = currentUser.email ?: "Kullanıcı",
-                        onLogout = {
-                            Firebase.auth.signOut() // Firebase'den çıkış yap
-                            navController.navigate(Screen.Auth.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        }
-                    )
+                    OpenProfileScreen(navController = navController)
                 }
             }
 
@@ -105,9 +94,29 @@ fun MainScreen() {
             composable("openProfile/{uid}") { backStackEntry ->
                 val uid = backStackEntry.arguments?.getString("uid")
                 if (uid != null) {
-                    OpenProfileScreen()
+                    // BURASI ÖNEMLİ: targetUid parametresini gönderiyoruz
+                    OpenProfileScreen(
+                        navController = navController,
+                        targetUid = uid
+                    )
                 }
             }
+
+            // Ayrıca kendi profilin için olan kısmı da kontrol et:
+            composable(Screen.Auth.route) {
+                val currentUser = authViewModel.getCurrentUser()
+                if (currentUser == null) {
+                    // ... (AuthScreen kodun) ...
+                } else {
+                    // Kendi profilin olduğu için targetUid göndermene gerek yok (veya null gönder)
+                    OpenProfileScreen(navController = navController)
+                }
+            }
+
+            composable(Screen.Timeline.route) {
+                TimelineScreen(navController = navController)
+            }
+
         }
     }
 }

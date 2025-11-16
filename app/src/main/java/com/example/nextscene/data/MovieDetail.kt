@@ -39,5 +39,7 @@ data class MovieDetail(
     val BoxOffice: String = "N/A",
     val Production: String = "N/A",
     val Website: String = "N/A",
-    val Response: String
+    val Response: String,
+    var isFavorite: Boolean = false,
+    var isWatched: Boolean = false
 )

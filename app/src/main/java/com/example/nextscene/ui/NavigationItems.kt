@@ -23,6 +23,7 @@ sealed class Screen(
     object Favorites : Screen("favorites", "Favorites", Icons.Default.Favorite)
     object Auth : Screen("auth", "Profile", Icons.Default.Person)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    object Timeline : Screen("timeline", "Timeline", Icons.Default.Settings)
 
     object DetailMovie : Screen(
         "detailmovie/{imdbID}",
@@ -38,7 +39,6 @@ sealed class Screen(
     )
 
 
-    // Yeni OpenProfile ekranı
     object OpenProfile : Screen(
         "openProfile/{uid}",
         "Profile",
@@ -48,10 +48,10 @@ sealed class Screen(
 }
 
 val items = listOf(
+    Screen.Timeline,
     Screen.Series,
     Screen.Films,
     Screen.Favorites,
     Screen.Auth,
     Screen.Settings,
-    Screen.OpenProfile
 )

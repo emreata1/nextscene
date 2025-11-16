@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,14 +28,32 @@ import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.lifecycle.SavedStateHandle // Needed for initializer approach
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+
 
 @Composable
 fun SeriesDetailScreen(
-    viewModel: SeriesDetailViewModel = viewModel(),
+    // The authViewModel is now passed to the SeriesDetailViewModel via the factory
     authViewModel: AuthViewModel = viewModel()
 ) {
+    // Create the SeriesDetailViewModel using a custom factory to inject AuthViewModel
+    val viewModel: SeriesDetailViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                // Access SavedStateHandle from the initializer scope
+                SeriesDetailViewModel(
+                    savedStateHandle = createSavedStateHandle(),
+                    authViewModel = authViewModel
+                )
+            }
+        }
+    )
+
     val movieDetail by viewModel.movieDetail.collectAsState()
-    val currentUser = authViewModel.getCurrentUser()
+    val currentUser = authViewModel.getCurrentUser() // Keep this if you need user ID for other logic
 
     Column(
         modifier = Modifier
@@ -106,32 +127,46 @@ fun SeriesDetailScreen(
             ) {
                 Button(
                     onClick = {
-                        currentUser?.uid?.let { uid ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addFavoriteSeries(uid, detail.imdbID)
-                            }
-                        }
+                        viewModel.toggleFavorite()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (detail.isFavorite) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+                    )
                 ) {
-                    Icon(Icons.Filled.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(
+                        if (detail.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = if (detail.isFavorite) "Favorilerden Çıkar" else "Favorilere Ekle",
+                        tint = if (detail.isFavorite) Color.White else MaterialTheme.colorScheme.onPrimary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Favorilere Ekle", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        if (detail.isFavorite) "Favorilerde" else "Favorilere Ekle",
+                        color = if (detail.isFavorite) Color.White else MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
 
                 Button(
                     onClick = {
-                        currentUser?.uid?.let { uid ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                authViewModel.addWatchedSeries(uid, detail.imdbID)
-                            }
-                        }
+                        viewModel.toggleWatched()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (detail.isWatched) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
+                    )
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary)
+                    Icon(
+                        if (detail.isWatched) Icons.Filled.Check else Icons.Outlined.Check,
+                        contentDescription = if (detail.isWatched) "İzlendi Olarak İşaretli" else "İzlendi Olarak İşaretle",
+                        tint = if (detail.isWatched) Color.White else MaterialTheme.colorScheme.onSecondary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("İzlendi Olarak İşaretledizi", color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        if (detail.isWatched) "İzlendi" else "İzlendi Olarak İşaretle",
+                        color = if (detail.isWatched) Color.White else MaterialTheme.colorScheme.onSecondary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
             }
 
@@ -140,5 +175,3 @@ fun SeriesDetailScreen(
         }
     }
 }
-
-
