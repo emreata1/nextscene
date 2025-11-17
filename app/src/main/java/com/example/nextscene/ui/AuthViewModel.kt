@@ -1,6 +1,5 @@
 package com.example.nextscene.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -74,12 +73,8 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- SADELEŞTİRİLMİŞ ARAMA FONKSİYONU ---
-    // Hata ayıklamak için güncellenmiş DEDEKTİF fonksiyon
     fun searchUsers(query: String) {
-        // 1. Fonksiyon çalışıyor mu?
-        Log.e("SearchDebug", "--------------------------------------------------")
-        Log.e("SearchDebug", "ARAMA BAŞLADI. Aranan kelime: '$query'")
+
 
         if (query.isBlank()) {
             _searchResults.value = emptyList()
@@ -88,7 +83,6 @@ class AuthViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // 2. Sorgu gönderiliyor...
                 val snapshot = db.collection("users")
                     .whereGreaterThanOrEqualTo("username", query)
                     .whereLessThanOrEqualTo("username", query + "\uf8ff")
@@ -96,42 +90,20 @@ class AuthViewModel : ViewModel() {
                     .get()
                     .await()
 
-                // 3. SONUÇ ANALİZİ
-                if (snapshot.isEmpty) {
-                    Log.e("SearchDebug", "⚠️ SONUÇ BULUNAMADI!")
-                    Log.e("SearchDebug", "Veritabanında 'username' alanı '$query' ile başlayan bir kayıt yok.")
-                    Log.e("SearchDebug", "İPUCU: Büyük/küçük harf veya boşluk hatası olabilir.")
-                } else {
-                    Log.e("SearchDebug", "✅ BAŞARILI! ${snapshot.size()} kullanıcı bulundu.")
-                    snapshot.documents.forEach { doc ->
-                        // Veritabanından gelen gerçek veriyi yazdır
-                        val gelenUsername = doc.getString("username")
-                        Log.e("SearchDebug", "-> Bulunan ID: ${doc.id}")
-                        Log.e("SearchDebug", "-> Bulunan Username: '$gelenUsername'")
-                    }
-                }
 
                 val users = snapshot.toObjects(UserData::class.java)
                 val currentUid = _currentUser.value?.uid
                 _searchResults.value = users.filter { it.uid != currentUid }
 
             } catch (e: Exception) {
-                // 4. Teknik Hata var mı?
-                Log.e("SearchDebug", "🚨 KRİTİK HATA OLUŞTU:", e)
                 _searchResults.value = emptyList()
             }
-            Log.e("SearchDebug", "--------------------------------------------------")
         }
     }
-    // ----------------------------------------
-
-    // ... (updateUserData, registerUser, loginUser vb. diğer fonksiyonlar değişmedi) ...
-    // Not: registerUser içindeki 'username_lowercase' kısmını sildim.
 
     suspend fun updateUserData(updatedData: Map<String, Any>) {
         _authState.value = AuthState(isLoading = true)
-        val uid = _currentUser.value?.uid
-        if (uid == null) return
+        val uid = _currentUser.value?.uid ?: return
         try {
             db.collection("users").document(uid).update(updatedData).await()
             fetchUserData(uid)
@@ -188,31 +160,9 @@ class AuthViewModel : ViewModel() {
     fun resetState() { _authState.value = AuthState() }
     fun getCurrentUser() = _currentUser.value
 
-    // ... (Firestore film/dizi fonksiyonları aynı kalsın) ...
-    suspend fun addWatchedMovie(uid: String, movieId: String) {
-        val data = hashMapOf("movieId" to movieId, "watchedAt" to FieldValue.serverTimestamp())
-        db.collection("users").document(uid).collection("watchedMovies").add(data).await()
-    }
-    suspend fun addFavoriteMovie(uid: String, movieId: String) {
-        val data = hashMapOf("movieId" to movieId, "addedAt" to FieldValue.serverTimestamp())
-        db.collection("users").document(uid).collection("favoriteMovies").add(data).await()
-    }
-    suspend fun addWatchedSeries(uid: String, seriesId: String) {
-        val data = hashMapOf("seriesId" to seriesId, "watchedAt" to FieldValue.serverTimestamp())
-        db.collection("users").document(uid).collection("watchedSeries").add(data).await()
-    }
-    suspend fun addFavoriteSeries(uid: String, seriesId: String) {
-        val data = hashMapOf("seriesId" to seriesId, "addedAt" to FieldValue.serverTimestamp())
-        db.collection("users").document(uid).collection("favoriteSeries").add(data).await()
-    }
-    suspend fun getFavoriteMovies(uid: String): List<String> {
-        val snapshot = db.collection("users").document(uid).collection("favoriteMovies").get().await()
-        return snapshot.documents.map { it.getString("movieId") ?: "" }
-    }
 
-    // ... (Mevcut kodların altına ekle) ...
 
-    // Bir kullanıcının diğerini takip edip etmediğini kontrol et
+
     suspend fun isUserFollowing(targetUid: String): Boolean {
         val currentUid = _currentUser.value?.uid ?: return false
         val doc = db.collection("users").document(currentUid)
@@ -226,17 +176,14 @@ class AuthViewModel : ViewModel() {
 
         val batch = db.batch()
 
-        // 1. BENİM 'following' koleksiyonuma hedef kullanıcıyı ekle
         val myFollowingRef = db.collection("users").document(currentUid)
             .collection("following").document(targetUid)
         batch.set(myFollowingRef, hashMapOf("followedAt" to FieldValue.serverTimestamp()))
 
-        // 2. HEDEFİN 'followers' koleksiyonuna beni ekle
         val targetFollowerRef = db.collection("users").document(targetUid)
             .collection("followers").document(currentUid)
         batch.set(targetFollowerRef, hashMapOf("followedAt" to FieldValue.serverTimestamp()))
 
-        // 3. Sayaçları Güncelle (Increment)
         val myUserRef = db.collection("users").document(currentUid)
         batch.update(myUserRef, "followingCount", FieldValue.increment(1))
 
@@ -246,13 +193,11 @@ class AuthViewModel : ViewModel() {
         batch.commit().await()
     }
 
-    // Takipten Çıkma İşlemi
     suspend fun unfollowUser(targetUid: String) {
         val currentUid = _currentUser.value?.uid ?: return
 
         val batch = db.batch()
 
-        // 1. Koleksiyonlardan sil
         val myFollowingRef = db.collection("users").document(currentUid)
             .collection("following").document(targetUid)
         batch.delete(myFollowingRef)
@@ -261,7 +206,6 @@ class AuthViewModel : ViewModel() {
             .collection("followers").document(currentUid)
         batch.delete(targetFollowerRef)
 
-        // 2. Sayaçları Güncelle (Decrement)
         val myUserRef = db.collection("users").document(currentUid)
         batch.update(myUserRef, "followingCount", FieldValue.increment(-1))
 
@@ -275,7 +219,7 @@ class AuthViewModel : ViewModel() {
             val snapshot = db.collection("users").document(uid)
                 .collection("followers")
                 .count()
-                .get(AggregateSource.SERVER) // Sunucudan say
+                .get(AggregateSource.SERVER)
                 .await()
             snapshot.count
         } catch (e: Exception) {
@@ -294,6 +238,12 @@ class AuthViewModel : ViewModel() {
         } catch (e: Exception) {
             0
         }
+    }
+    fun logout() {
+        auth.signOut()
+        _currentUser.value = null
+        _userData.value = null
+        _authState.value = AuthState()
     }
 
 

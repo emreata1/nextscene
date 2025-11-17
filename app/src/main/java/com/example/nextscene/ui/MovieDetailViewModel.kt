@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.example.nextscene.data.MovieWatchlistManager // Changed import
+import com.example.nextscene.data.MovieWatchlistManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -22,14 +22,17 @@ class MovieDetailViewModel(
     private val _rawMovieDetail = MutableStateFlow<MovieDetail?>(null)
     private var currentImdbID: String? = null
 
+    // combine artık 4 parametre alıyor: Detay + Favoriler + İzlenenler + Watchlist
     val movieDetail: StateFlow<MovieDetail?> = combine(
         _rawMovieDetail,
-        MovieWatchlistManager.favoriteMovieIds, // Changed reference
-        MovieWatchlistManager.watchedMovieIds // Changed reference
-    ) { rawDetail, favoriteIds, watchedIds ->
+        MovieWatchlistManager.favoriteMovieIds,
+        MovieWatchlistManager.watchedMovieIds,
+        MovieWatchlistManager.watchlistMovieIds // 1. YENİ: Watchlist akışını ekledik
+    ) { rawDetail, favoriteIds, watchedIds, watchlistIds ->
         rawDetail?.copy(
             isFavorite = favoriteIds.contains(rawDetail.imdbID),
-            isWatched = watchedIds.contains(rawDetail.imdbID)
+            isWatched = watchedIds.contains(rawDetail.imdbID),
+            isInWatchlist = watchlistIds.contains(rawDetail.imdbID) // 2. YENİ: Watchlist durumunu kontrol et
         )
     }.stateIn(
         scope = viewModelScope,
@@ -70,6 +73,13 @@ class MovieDetailViewModel(
     fun toggleWatched() {
         _rawMovieDetail.value?.let { currentDetail ->
             MovieWatchlistManager.toggleWatched(currentDetail.imdbID)
+        }
+    }
+
+    // 3. YENİ: Watchlist Toggle Fonksiyonu
+    fun toggleWatchlist() {
+        _rawMovieDetail.value?.let { currentDetail ->
+            MovieWatchlistManager.toggleWatchlist(currentDetail.imdbID)
         }
     }
 }

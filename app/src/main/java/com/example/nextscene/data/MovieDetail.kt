@@ -3,6 +3,7 @@
 package com.example.nextscene.data
 
 import android.annotation.SuppressLint
+import android.text.BoringLayout
 import kotlinx.serialization.Serializable
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -41,5 +42,6 @@ data class MovieDetail(
     val Website: String = "N/A",
     val Response: String,
     var isFavorite: Boolean = false,
-    var isWatched: Boolean = false
+    var isWatched: Boolean = false,
+    var isInWatchlist: Boolean = false
 )

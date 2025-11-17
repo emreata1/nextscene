@@ -11,12 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import androidx.navigation.navArgument
+
 
 @Composable
 fun MainScreen() {
@@ -49,7 +50,7 @@ fun MainScreen() {
             }
         }
     ) { innerPadding ->
-        NavHost(navController = navController, startDestination = Screen.Series.route, modifier = Modifier.padding(innerPadding)) {
+        NavHost(navController = navController, startDestination = Screen.Timeline.route, modifier = Modifier.padding(innerPadding)) {
             composable(Screen.Series.route) { SeriesScreen(navController = navController) }
             composable(Screen.Films.route) { MoviesScreen(navController = navController) }
             composable(Screen.Favorites.route) { FavoritesScreen() }
@@ -71,7 +72,10 @@ fun MainScreen() {
                 }
             }
 
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) {
+                SettingsScreen(navController = navController)
+            }
+
             composable(
                 route = Screen.DetailMovie.route,
                 arguments = Screen.DetailMovie.navArguments
@@ -106,15 +110,61 @@ fun MainScreen() {
             composable(Screen.Auth.route) {
                 val currentUser = authViewModel.getCurrentUser()
                 if (currentUser == null) {
-                    // ... (AuthScreen kodun) ...
+                    AuthScreen(
+                        authViewModel = authViewModel,
+                        onAuthSuccess = {
+                            navController.navigate(Screen.Series.route) {
+                                popUpTo(Screen.Auth.route) { inclusive = true }
+                            }
+                        }
+                    )
                 } else {
-                    // Kendi profilin olduğu için targetUid göndermene gerek yok (veya null gönder)
-                    OpenProfileScreen(navController = navController)
+                    // Kendi profilin olduğu için targetUid null veya kendi uid olabilir
+                    OpenProfileScreen(navController = navController, targetUid = currentUser.uid)
                 }
             }
 
             composable(Screen.Timeline.route) {
                 TimelineScreen(navController = navController)
+            }
+
+            composable(
+                route = Screen.FollowList.route,
+                arguments = Screen.FollowList.navArguments
+            ) { backStackEntry ->
+                val uid = backStackEntry.arguments?.getString("uid")
+                val type = backStackEntry.arguments?.getString("type")
+                if (uid != null && type != null) {
+                    FollowListScreen(
+                        navController = navController,
+                        targetUid = uid,
+                        listType = type
+                    )
+                }
+            }
+
+            // Diğer sayfaların (composable'ların) olduğu yere ekle:
+
+            composable(
+                route = "full_list_screen/{userId}/{listType}/{pageTitle}",
+                arguments = listOf(
+                    navArgument("userId") { type = NavType.StringType },
+                    navArgument("listType") { type = NavType.StringType },
+                    navArgument("pageTitle") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                // Parametreleri alıyoruz
+                val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                val listType = backStackEntry.arguments?.getString("listType") ?: ""
+                val pageTitle = backStackEntry.arguments?.getString("pageTitle") ?: ""
+
+                // Ekranı çağırıyoruz
+                FullListScreen(
+                    navController = navController,
+                    userId = userId,
+                    listType = listType,
+                    pageTitle = pageTitle
+                )
             }
 
         }

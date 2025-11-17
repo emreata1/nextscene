@@ -45,6 +45,16 @@ sealed class Screen(
         Icons.Default.Person,
         listOf(navArgument("uid") { type = NavType.StringType })
     )
+
+    object FollowList : Screen(
+        "followList/{uid}/{type}", // uid ve type (followers/following) parametreleri
+        "Follow List",
+        null,
+        listOf(
+            navArgument("uid") { type = NavType.StringType },
+            navArgument("type") { type = NavType.StringType }
+        )
+    )
 }
 
 val items = listOf(
@@ -53,5 +63,4 @@ val items = listOf(
     Screen.Films,
     Screen.Favorites,
     Screen.Auth,
-    Screen.Settings,
 )

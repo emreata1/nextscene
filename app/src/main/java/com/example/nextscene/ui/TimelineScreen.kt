@@ -116,13 +116,13 @@ fun TimelineScreen(
 }
 
 // Arama listesindeki her bir satır için composable
-// Arama listesindeki her bir satır için composable
+
 @Composable
 fun UserSearchResultItem(
     user: UserData,
     onClick: () -> Unit
 ) {
-    ListItem( // Material3'ün hazır liste elemanını kullanmak en temizi
+    ListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),

@@ -14,11 +14,17 @@ object SeriesWatchlistManager {
     private val firestore = FirebaseFirestore.getInstance()
     private val _currentUserId = MutableStateFlow<String?>(null)
 
+    // --- FAVORITES ---
     private val _favoriteSeriesIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteSeriesIds: StateFlow<Set<String>> = _favoriteSeriesIds.asStateFlow()
 
+    // --- WATCHED ---
     private val _watchedSeriesIds = MutableStateFlow<Set<String>>(emptySet())
     val watchedSeriesIds: StateFlow<Set<String>> = _watchedSeriesIds.asStateFlow()
+
+    // --- WATCHLIST (DAHA SONRA İZLE) - YENİ ---
+    private val _watchlistSeriesIds = MutableStateFlow<Set<String>>(emptySet())
+    val watchlistSeriesIds: StateFlow<Set<String>> = _watchlistSeriesIds.asStateFlow()
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -28,6 +34,7 @@ object SeriesWatchlistManager {
                 } else {
                     _favoriteSeriesIds.value = emptySet()
                     _watchedSeriesIds.value = emptySet()
+                    _watchlistSeriesIds.value = emptySet() // Reset watchlist
                 }
             }
         }
@@ -40,16 +47,25 @@ object SeriesWatchlistManager {
     private fun loadWatchlistFromFirestore(userId: String) {
         val favoriteCollectionRef = firestore.collection("users").document(userId).collection("favoriteSeries")
         val watchedCollectionRef = firestore.collection("users").document(userId).collection("watchedSeries")
+        // YENİ KOLEKSİYON REFERANSI
+        val watchlistCollectionRef = firestore.collection("users").document(userId).collection("watchlistSeries")
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Favorites Load
                 val favoritesSnapshot = favoriteCollectionRef.get().await()
                 _favoriteSeriesIds.value = favoritesSnapshot.documents.mapNotNull { it.id }.toSet()
 
+                // Watched Load
                 val watchedSnapshot = watchedCollectionRef.get().await()
                 _watchedSeriesIds.value = watchedSnapshot.documents.mapNotNull { it.id }.toSet()
+
+                // Watchlist Load (YENİ)
+                val watchlistSnapshot = watchlistCollectionRef.get().await()
+                _watchlistSeriesIds.value = watchlistSnapshot.documents.mapNotNull { it.id }.toSet()
+
             } catch (e: Exception) {
-                println("Error loading series watchlist from subcollections: $e")
+                println("Error loading series lists from subcollections: $e")
             }
         }
     }
@@ -65,7 +81,7 @@ object SeriesWatchlistManager {
                     _favoriteSeriesIds.value = currentFavorites - imdbID
                 }
                 .addOnFailureListener { e ->
-                    println("Error removing favorite series from subcollection: $e")
+                    println("Error removing favorite series: $e")
                 }
         } else {
             val data = hashMapOf(
@@ -77,7 +93,7 @@ object SeriesWatchlistManager {
                     _favoriteSeriesIds.value = currentFavorites + imdbID
                 }
                 .addOnFailureListener { e ->
-                    println("Error adding favorite series to subcollection: $e")
+                    println("Error adding favorite series: $e")
                 }
         }
     }
@@ -93,7 +109,7 @@ object SeriesWatchlistManager {
                     _watchedSeriesIds.value = currentWatched - imdbID
                 }
                 .addOnFailureListener { e ->
-                    println("Error removing watched series from subcollection: $e")
+                    println("Error removing watched series: $e")
                 }
         } else {
             val data = hashMapOf(
@@ -105,16 +121,39 @@ object SeriesWatchlistManager {
                     _watchedSeriesIds.value = currentWatched + imdbID
                 }
                 .addOnFailureListener { e ->
-                    println("Error adding watched series to subcollection: $e")
+                    println("Error adding watched series: $e")
                 }
         }
     }
 
-    fun isFavorite(imdbID: String): Boolean {
-        return imdbID in _favoriteSeriesIds.value
-    }
+    // --- YENİ: TOGGLE WATCHLIST FUNCTION ---
+    fun toggleWatchlist(imdbID: String) {
+        val userId = _currentUserId.value ?: return
+        val watchlistDocRef = firestore.collection("users").document(userId).collection("watchlistSeries").document(imdbID)
 
-    fun isWatched(imdbID: String): Boolean {
-        return imdbID in _watchedSeriesIds.value
+        val currentWatchlist = _watchlistSeriesIds.value
+        if (imdbID in currentWatchlist) {
+            // Listeden Çıkar
+            watchlistDocRef.delete()
+                .addOnSuccessListener {
+                    _watchlistSeriesIds.value = currentWatchlist - imdbID
+                }
+                .addOnFailureListener { e ->
+                    println("Error removing watchlist series: $e")
+                }
+        } else {
+            // Listeye Ekle
+            val data = hashMapOf(
+                "seriesId" to imdbID,
+                "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            watchlistDocRef.set(data)
+                .addOnSuccessListener {
+                    _watchlistSeriesIds.value = currentWatchlist + imdbID
+                }
+                .addOnFailureListener { e ->
+                    println("Error adding watchlist series: $e")
+                }
+        }
     }
 }

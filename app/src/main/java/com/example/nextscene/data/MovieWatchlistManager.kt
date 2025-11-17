@@ -14,11 +14,18 @@ object MovieWatchlistManager {
     private val firestore = FirebaseFirestore.getInstance()
     private val _currentUserId = MutableStateFlow<String?>(null)
 
+    // --- FAVORITES ---
     private val _favoriteMovieIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteMovieIds: StateFlow<Set<String>> = _favoriteMovieIds.asStateFlow()
 
+    // --- WATCHED ---
     private val _watchedMovieIds = MutableStateFlow<Set<String>>(emptySet())
     val watchedMovieIds: StateFlow<Set<String>> = _watchedMovieIds.asStateFlow()
+
+    // --- WATCHLIST (DAHA SONRA İZLE) - YENİ EKLENDİ ---
+    private val _watchlistMovieIds = MutableStateFlow<Set<String>>(emptySet())
+    val watchlistMovieIds: StateFlow<Set<String>> = _watchlistMovieIds.asStateFlow()
+
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -28,6 +35,7 @@ object MovieWatchlistManager {
                 } else {
                     _favoriteMovieIds.value = emptySet()
                     _watchedMovieIds.value = emptySet()
+                    _watchlistMovieIds.value = emptySet() // Reset watchlist
                 }
             }
         }
@@ -40,16 +48,25 @@ object MovieWatchlistManager {
     private fun loadWatchlistFromFirestore(userId: String) {
         val favoriteCollectionRef = firestore.collection("users").document(userId).collection("favoriteMovies")
         val watchedCollectionRef = firestore.collection("users").document(userId).collection("watchedMovies")
+        // Yeni referans
+        val watchlistCollectionRef = firestore.collection("users").document(userId).collection("watchlistMovies")
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Favorites load
                 val favoritesSnapshot = favoriteCollectionRef.get().await()
                 _favoriteMovieIds.value = favoritesSnapshot.documents.mapNotNull { it.id }.toSet()
 
+                // Watched load
                 val watchedSnapshot = watchedCollectionRef.get().await()
                 _watchedMovieIds.value = watchedSnapshot.documents.mapNotNull { it.id }.toSet()
+
+                // Watchlist load (YENİ)
+                val watchlistSnapshot = watchlistCollectionRef.get().await()
+                _watchlistMovieIds.value = watchlistSnapshot.documents.mapNotNull { it.id }.toSet()
+
             } catch (e: Exception) {
-                println("Error loading movie watchlist from subcollections: $e")
+                println("Error loading movie lists from subcollections: $e")
             }
         }
     }
@@ -64,21 +81,17 @@ object MovieWatchlistManager {
                 .addOnSuccessListener {
                     _favoriteMovieIds.value = currentFavorites - imdbID
                 }
-                .addOnFailureListener { e ->
-                    println("Error removing favorite movie from subcollection: $e")
-                }
+                .addOnFailureListener { e -> println("Error removing favorite: $e") }
         } else {
             val data = hashMapOf(
-                "movieId" to imdbID, // Add movieId as a field
+                "movieId" to imdbID,
                 "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
             )
             favoriteDocRef.set(data)
                 .addOnSuccessListener {
                     _favoriteMovieIds.value = currentFavorites + imdbID
                 }
-                .addOnFailureListener { e ->
-                    println("Error adding favorite movie to subcollection: $e")
-                }
+                .addOnFailureListener { e -> println("Error adding favorite: $e") }
         }
     }
 
@@ -92,29 +105,44 @@ object MovieWatchlistManager {
                 .addOnSuccessListener {
                     _watchedMovieIds.value = currentWatched - imdbID
                 }
-                .addOnFailureListener { e ->
-                    println("Error removing watched movie from subcollection: $e")
-                }
+                .addOnFailureListener { e -> println("Error removing watched: $e") }
         } else {
             val data = hashMapOf(
-                "movieId" to imdbID, // Add movieId as a field
+                "movieId" to imdbID,
                 "watchedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
             )
             watchedDocRef.set(data)
                 .addOnSuccessListener {
                     _watchedMovieIds.value = currentWatched + imdbID
                 }
-                .addOnFailureListener { e ->
-                    println("Error adding watched movie to subcollection: $e")
-                }
+                .addOnFailureListener { e -> println("Error adding watched: $e") }
         }
     }
 
-    fun isFavorite(imdbID: String): Boolean {
-        return imdbID in _favoriteMovieIds.value
-    }
+    // --- YENİ FONKSİYON: TOGGLE WATCHLIST ---
+    fun toggleWatchlist(imdbID: String) {
+        val userId = _currentUserId.value ?: return
+        val watchlistDocRef = firestore.collection("users").document(userId).collection("watchlistMovies").document(imdbID)
 
-    fun isWatched(imdbID: String): Boolean {
-        return imdbID in _watchedMovieIds.value
+        val currentWatchlist = _watchlistMovieIds.value
+        if (imdbID in currentWatchlist) {
+            // Listeden çıkar
+            watchlistDocRef.delete()
+                .addOnSuccessListener {
+                    _watchlistMovieIds.value = currentWatchlist - imdbID
+                }
+                .addOnFailureListener { e -> println("Error removing form watchlist: $e") }
+        } else {
+            // Listeye ekle
+            val data = hashMapOf(
+                "movieId" to imdbID,
+                "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            watchlistDocRef.set(data)
+                .addOnSuccessListener {
+                    _watchlistMovieIds.value = currentWatchlist + imdbID
+                }
+                .addOnFailureListener { e -> println("Error adding to watchlist: $e") }
+        }
     }
 }
