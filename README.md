@@ -95,3 +95,17 @@ Feel free to contribute with feedback, bug reports, and new features!
 📄 License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+<p align="center">
+  <img src="https://github.com/emreata1/nextscene/blob/ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41%20(4).jpeg?raw=true" alt="Ekran Görüntüsü 4" width="30%" />
+  
+  <img src="https://github.com/emreata1/nextscene/blob/ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41%20(3).jpeg?raw=true" alt="Ekran Görüntüsü 3" width="30%" />
+  
+  <img src="https://github.com/emreata1/nextscene/blob/ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41%20(2).jpeg?raw=true" alt="Ekran Görüntüsü 2" width="30%" />
+  
+  <img src="https://github.com/emreata1/nextscene/blob/ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41%20(1).jpeg?raw=true" alt="Ekran Görüntüsü 1" width="30%" />
+  
+  <img src="https://github.com/emreata1/nextscene/blob/ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41%20(6).jpeg?raw=true" alt="Ekran Görüntüsü 6" width="30%" />
+  
+  <img src="https://github.com/emreata1/nextscene/blob://ee1abd4b8168ee199676dad9ed2c70f7ec0078e5/app/src/main/res/drawable/WhatsApp%20Image%202025-11-19%20at%2004.17.41.jpeg?raw=true" alt="Ekran Görüntüsü 5" width="30%" />
+</p>
