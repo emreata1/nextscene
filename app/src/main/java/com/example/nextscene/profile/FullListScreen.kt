@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -32,27 +32,22 @@ import kotlinx.coroutines.tasks.await
 fun FullListScreen(
     navController: NavController,
     userId: String,
-    listType: String, // "watched", "favorites", "watchlist"
-    pageTitle: String // "İzlenenler", "Favoriler" vb.
+    listType: String,
+    pageTitle: String
 ) {
     val db = FirebaseFirestore.getInstance()
-
-    // Filtre Durumu: 0 = Hepsi, 1 = Filmler, 2 = Diziler
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
     val filters = listOf("Hepsi", "Filmler", "Diziler")
 
-    // Veriler
     var movies by remember { mutableStateOf(listOf<MovieDetail>()) }
     var series by remember { mutableStateOf(listOf<MovieDetail>()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Veri Çekme (ListType'a göre koleksiyon adlarını belirle)
     LaunchedEffect(userId, listType) {
         isLoading = true
         try {
             val userRef = db.collection("users").document(userId)
 
-            // Koleksiyon isimlerini listType'a göre belirle
             val movieCollection = when(listType) {
                 "watched" -> "watchedMovies"
                 "favorites" -> "favoriteMovies"
@@ -67,17 +62,13 @@ fun FullListScreen(
                 else -> "watchedSeries"
             }
 
-            // ID'leri çek
             val mIds = userRef.collection(movieCollection).get().await().documents.mapNotNull { it.getString("movieId") }
             val sIds = userRef.collection(seriesCollection).get().await().documents.mapNotNull { it.getString("seriesId") }
 
             val apiKey = "b9bd48a6"
 
-            // API'den detayları çek
-            // API'den detayları çek
             val fetchedMovies = mIds.map { id ->
                 async {
-                    // Sadece id ve apiKey'i göndermen yeterli
                     NetworkModule.omdbApiService.getMovieDetail(imdbID = id, apiKey = apiKey)
                 }
             }.awaitAll().filterNotNull()
@@ -98,11 +89,10 @@ fun FullListScreen(
         }
     }
 
-    // Filtreleme Mantığı
     val displayList = remember(selectedFilterIndex, movies, series) {
         val combined = when (selectedFilterIndex) {
-            1 -> movies // Sadece Filmler
-            2 -> series // Sadece Diziler
+            1 -> movies
+            2 -> series
             else -> (movies + series).shuffled() // Hepsi
         }
         combined
@@ -122,7 +112,6 @@ fun FullListScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
 
-            // --- FİLTRE SEKMELERİ ---
             TabRow(selectedTabIndex = selectedFilterIndex) {
                 filters.forEachIndexed { index, title ->
                     Tab(
@@ -142,7 +131,6 @@ fun FullListScreen(
                     Text("Bu kategoride içerik yok.", color = Color.Gray)
                 }
             } else {
-                // --- IZGARA GÖRÜNÜMÜ (GRID) ---
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 100.dp), // Ekran boyutuna göre sığdırır
                     contentPadding = PaddingValues(16.dp),
@@ -169,12 +157,14 @@ fun FullListScreen(
                                 contentScale = ContentScale.Crop
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = item.Title,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            item.Title?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }

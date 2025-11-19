@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.movieandseries
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

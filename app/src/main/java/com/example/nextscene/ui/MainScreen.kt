@@ -17,6 +17,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.nextscene.auth.AuthScreen
+import com.example.nextscene.auth.AuthViewModel
+import com.example.nextscene.movieandseries.MovieDetailScreen
+import com.example.nextscene.movieandseries.MoviesScreen
+import com.example.nextscene.movieandseries.SeriesDetailScreen
+import com.example.nextscene.movieandseries.SeriesScreen
+import com.example.nextscene.profile.FollowListScreen
+import com.example.nextscene.profile.FullListScreen
+import com.example.nextscene.profile.OpenProfileScreen
 
 
 @Composable
@@ -53,7 +62,6 @@ fun MainScreen() {
         NavHost(navController = navController, startDestination = Screen.Timeline.route, modifier = Modifier.padding(innerPadding)) {
             composable(Screen.Series.route) { SeriesScreen(navController = navController) }
             composable(Screen.Films.route) { MoviesScreen(navController = navController) }
-            composable(Screen.Favorites.route) { FavoritesScreen() }
             composable(Screen.Auth.route) {
                 val currentUser = authViewModel.getCurrentUser()
 
@@ -144,6 +152,15 @@ fun MainScreen() {
             }
 
             // Diğer sayfaların (composable'ların) olduğu yere ekle:
+            composable("post_detail/{postId}") { backStackEntry ->
+                val postId = backStackEntry.arguments?.getString("postId")
+                // Burada PostDetailScreen'i çağırın ve postId'yi geçirin
+                if (postId != null) {
+                    PostDetailScreen(postId = postId, navController = navController)
+                } else {
+                    // Hata mesajı gösterebilirsiniz
+                }
+            }
 
             composable(
                 route = "full_list_screen/{userId}/{listType}/{pageTitle}",

@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions

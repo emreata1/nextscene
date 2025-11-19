@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.movieandseries
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable

@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.movieandseries
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +14,7 @@ class SeriesViewModel : ViewModel() {
     val series: StateFlow<List<Movie>> = _series
 
     init {
-        fetchSeries("guardians") // Örnek arama sorgusu
+        fetchSeries("spider") // Örnek arama sorgusu
     }
 
     fun fetchSeries(query: String) {

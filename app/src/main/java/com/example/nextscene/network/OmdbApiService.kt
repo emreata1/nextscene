@@ -19,4 +19,11 @@ interface OmdbApiService {
         @Query("plot") plot: String = "full",
         @Query("apikey") apiKey: String
     ): MovieDetail
+
+    @GET("/")
+    suspend fun searchMoviesWithType(
+        @Query("s") query: String,
+        @Query("apikey") apiKey: String,
+        @Query("type") type: String? // Movie, Series, Episode veya null (hepsi)
+    ): OmdbResponse // SearchResponse içinde List<Movie> var
 }

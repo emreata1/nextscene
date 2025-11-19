@@ -1,4 +1,4 @@
-package com.example.nextscene.ui
+package com.example.nextscene.movieandseries
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.nextscene.movieandseries.SeriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

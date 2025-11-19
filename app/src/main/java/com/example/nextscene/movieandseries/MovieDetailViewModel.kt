@@ -1,18 +1,19 @@
-package com.example.nextscene.ui
+package com.example.nextscene.movieandseries
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nextscene.data.MovieDetail
+import com.example.nextscene.data.MovieWatchlistManager
 import com.example.nextscene.network.NetworkModule
+import com.example.nextscene.auth.AuthViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import com.example.nextscene.data.MovieWatchlistManager
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class MovieDetailViewModel(
     savedStateHandle: SavedStateHandle,
@@ -36,7 +37,7 @@ class MovieDetailViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000L),
+        started = SharingStarted.Companion.WhileSubscribed(5000L),
         initialValue = null
     )
 

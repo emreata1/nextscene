@@ -20,7 +20,6 @@ sealed class Screen(
 ) {
     object Series : Screen("series", "Series", Icons.Default.Home)
     object Films : Screen("films", "Films", Icons.Default.Search)
-    object Favorites : Screen("favorites", "Favorites", Icons.Default.Favorite)
     object Auth : Screen("auth", "Profile", Icons.Default.Person)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     object Timeline : Screen("timeline", "Timeline", Icons.Default.Settings)
@@ -61,6 +60,5 @@ val items = listOf(
     Screen.Timeline,
     Screen.Series,
     Screen.Films,
-    Screen.Favorites,
     Screen.Auth,
 )

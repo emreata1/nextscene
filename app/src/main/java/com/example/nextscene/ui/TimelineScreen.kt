@@ -21,19 +21,38 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.nextscene.auth.AuthViewModel
+import com.example.nextscene.auth.UserData
+
+// PostItem ve Posts/UserData sınıflarının import'u (Paket yolunuzu kontrol edin!)
+import com.example.nextscene.profile.PostItem
+
+// import com.example.nextscene.ui.Post
+// import com.example.nextscene.auth.UserData
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
-    navController: NavController, // Sonuçlara tıklamak için NavController gerekli
-    viewModel: AuthViewModel = viewModel() // ViewModel'i al
+    navController: NavController,
+    viewModel: AuthViewModel = viewModel()
 ) {
 
     // 1. Arama metni state'i
     var searchText by remember { mutableStateOf("") }
 
-    // 2. ViewModel'den arama sonuçlarını dinle
+    // 2. ViewModel'den arama sonuçlarını dinle (List<UserData>)
     val searchResults by viewModel.searchResults.collectAsState()
+
+    // 3. ViewModel'den tüm gönderileri dinle (List<Post>)
+    val allPosts by viewModel.allPosts.collectAsState()
+
+
+    // Sayfa yüklendiğinde gönderileri çekmek için LaunchedEffect
+    LaunchedEffect(Unit) {
+        // ViewModel'deki tüm gönderileri çekme fonksiyonunu çağır
+        viewModel.fetchAllPosts()
+    }
 
     Column(
         modifier = Modifier
@@ -41,7 +60,7 @@ fun TimelineScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 3. Arama Barı
+        // 4. Arama Barı
         OutlinedTextField(
             value = searchText,
             onValueChange = {
@@ -63,59 +82,76 @@ fun TimelineScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Arama Sonuçlarını Gösteren Liste
+        // --- İÇERİK BÖLÜMÜ (Arama veya Zaman Tüneli) ---
 
-        // Arama çubuğu boşsa, normal akışı göster (veya bir mesaj)
-        if (searchText.isBlank()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Kullanıcıları aramak için yazmaya başlayın.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        // Arama çubuğu dolu ama sonuç yoksa
-        else if (searchResults.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Kullanıcı bulunamadı.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        // Sonuç bulunduysa
-        else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // Kalan tüm alanı kapla
-            ) {
-                items(searchResults) { user ->
-                    UserSearchResultItem(
-                        user = user,
-                        onClick = {
-                            // Tıklayınca o kullanıcının profiline git
-                            // (Screen.kt'deki OpenProfile rotasını kullanıyoruz)
-                            navController.navigate("openProfile/${user.uid}")
-                        }
+        // Arama çubuğu doluysa (Kullanıcı arama yapıyor)
+        if (searchText.isNotBlank()) {
+
+            // Sonuç yoksa
+            if (searchResults.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Kullanıcı bulunamadı.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+            // Sonuç bulunduysa (Kullanıcı Listesi)
+            else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // DÜZELTME: Kullanıcı sonuçları listelenir ve UserSearchResultItem kullanılır.
+                    items(searchResults) { user ->
+                        UserSearchResultItem(
+                            user = user,
+                            onClick = {
+                                // Tıklanınca o kullanıcının profiline git
+                                navController.navigate("openProfile/${user.uid}")
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        // Arama çubuğu boşsa (Zaman Tüneli / Tüm Gönderiler)
+        else {
+            if (allPosts.isEmpty()) { // Veya isPostsLoading kontrolü
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Henüz paylaşılan gönderi yok.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp) // Gönderiler arasına boşluk
+                ) {
+                    // Gönderileri en yeniden eskiye doğru listeler
+                    items(allPosts) { post ->
+                        PostItem(
+                            post = post,
+                            onClick = { postId ->
+                                // DÜZELTME: Tıklanınca genişletilmiş görünüme (detay rotasına) git
+                                navController.navigate("post_detail/$postId")
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// Arama listesindeki her bir satır için composable
+// --- YARDIMCI BİLEŞEN: KULLANICI ARAMA SONUCU ---
 
 @Composable
 fun UserSearchResultItem(
@@ -127,29 +163,24 @@ fun UserSearchResultItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
 
-        // --- HATA BURADAYDI ---
-        headlineContent = { // 'headlineText' yerine 'headlineContent'
+        headlineContent = {
             Text(user.username, fontWeight = FontWeight.Bold)
         },
-        // --- VE BURADAYDI ---
-        supportingContent = { // 'supportingText' yerine 'supportingContent'
-            // İsim/Soyisim varsa onu da göster
+        supportingContent = {
             if (user.name.isNotBlank() && user.surname.isNotBlank()) {
                 Text("${user.name} ${user.surname}")
             }
         },
-        // --- BU KISIM DOĞRUYDU ---
         leadingContent = {
-            // OpenProfileScreen'deki profil resmi mantığının aynısı
             Box(
                 modifier = Modifier
-                    .size(40.dp) // Liste için daha küçük
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 val imageUrl = user.profileImageUrl
-                if (imageUrl.isNotBlank()) {
+                if (imageUrl?.isNotBlank() == true) { // Null check eklendi
                     Image(
                         painter = rememberAsyncImagePainter(imageUrl),
                         contentDescription = user.username,

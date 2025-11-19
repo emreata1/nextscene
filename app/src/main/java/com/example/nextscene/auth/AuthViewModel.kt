@@ -1,7 +1,8 @@
-package com.example.nextscene.ui
+package com.example.nextscene.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nextscene.profile.Post
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
@@ -11,8 +12,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 import com.google.firebase.firestore.AggregateSource
+import com.google.firebase.firestore.Query
+
+// --- Veri Sınıfları (ViewModel'in kullandığı ve UI'a sağladığı durumlar) ---
 
 data class AuthState(
     val isLoading: Boolean = false,
@@ -20,19 +25,23 @@ data class AuthState(
     val errorMessage: String? = null
 )
 
-// Veri sınıfın (Eski, sade hali)
+// UserData sınıfı (Kayıt hatasına neden olan döngüsel alanlar çıkarılmıştır)
 data class UserData(
     val uid: String = "",
     val email: String = "",
-    val username: String = "", // Sadece username var
+    val username: String = "",
     val name: String = "",
     val surname: String = "",
     val phoneNumber: String = "",
     val bio: String = "",
     val role: String = "",
     val createdAt: Timestamp? = null,
-    val profileImageUrl: String = ""
+    val profileImageUrl: String = "",
+    val followerCount: Long = 0, // Takip işlemleri için eklenmiştir
+    val followingCount: Long = 0  // Takip işlemleri için eklenmiştir
 )
+
+// -------------------------------------------------------------------------
 
 class AuthViewModel : ViewModel() {
 
@@ -43,13 +52,16 @@ class AuthViewModel : ViewModel() {
     val authState: StateFlow<AuthState> = _authState
 
     private val _currentUser = MutableStateFlow(auth.currentUser)
-    val currentUser: StateFlow<com.google.firebase.auth.FirebaseUser?> = _currentUser
+    val currentUser: StateFlow<FirebaseUser?> = _currentUser
 
     private val _userData = MutableStateFlow<UserData?>(null)
     val userData: StateFlow<UserData?> = _userData
 
     private val _searchResults = MutableStateFlow<List<UserData>>(emptyList())
     val searchResults: StateFlow<List<UserData>> = _searchResults
+
+    private val _allPosts = MutableStateFlow<List<Post>>(emptyList())
+    val allPosts: StateFlow<List<Post>> = _allPosts
 
     init {
         auth.addAuthStateListener {
@@ -83,6 +95,7 @@ class AuthViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
+                // Not: username alanında index oluşturulmuş olmalıdır.
                 val snapshot = db.collection("users")
                     .whereGreaterThanOrEqualTo("username", query)
                     .whereLessThanOrEqualTo("username", query + "\uf8ff")
@@ -101,21 +114,12 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    suspend fun updateUserData(updatedData: Map<String, Any>) {
-        _authState.value = AuthState(isLoading = true)
-        val uid = _currentUser.value?.uid ?: return
-        try {
-            db.collection("users").document(uid).update(updatedData).await()
-            fetchUserData(uid)
-            _authState.value = AuthState(isLoading = false, isSuccess = true)
-        } catch (e: Exception) {
-            _authState.value = AuthState(isLoading = false, errorMessage = e.message)
-        }
-    }
+    // --- Kullanıcı Kaydı ve Girişi ---
 
     suspend fun registerUser(email: String, password: String, username: String) {
         _authState.value = AuthState(isLoading = true)
         try {
+            // 1. Kullanıcı Adı Kontrolü
             val usernameQuery = db.collection("users")
                 .whereEqualTo("username", username)
                 .get()
@@ -123,9 +127,11 @@ class AuthViewModel : ViewModel() {
 
             if (!usernameQuery.isEmpty) throw Exception("Bu kullanıcı adı zaten alınmış.")
 
+            // 2. Firebase Auth Kullanıcısını Oluştur
             val result = auth.createUserWithEmailAndPassword(email, password).await()
+            // Hata yoksa UID alınır.
             val uid = result.user?.uid ?: throw Exception("UID alınamadı")
-
+            // 3. Firestore'a Profil Verisini Kaydet
             val userData = hashMapOf(
                 "uid" to uid,
                 "email" to email,
@@ -135,12 +141,14 @@ class AuthViewModel : ViewModel() {
                 "surname" to "",
                 "phoneNumber" to "",
                 "bio" to "",
-                "role" to "",
-                "profileImageUrl" to ""
+                "role" to "user",
+                "profileImageUrl" to "",
+                "followerCount" to 0L, // İlk değer
+                "followingCount" to 0L  // İlk değer
             )
 
-            db.collection("users").document(uid).set(userData).await()
-            _authState.value = AuthState(isLoading = false, isSuccess = true)
+            // Kayıt kuralı: allow create: if request.auth != null && request.auth.uid == userId;
+            db.collection("users").document(uid).set(userData).await() // <-- Buradaki UID, kuraldaki {userId} ile eşleşmeli            _authState.value = AuthState(isLoading = false, isSuccess = true)
 
         } catch (e: Exception) {
             _authState.value = AuthState(isLoading = false, errorMessage = e.message)
@@ -157,11 +165,19 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun resetState() { _authState.value = AuthState() }
-    fun getCurrentUser() = _currentUser.value
+    // --- Takip Mekanizmaları ---
 
-
-
+    suspend fun updateUserData(updatedData: Map<String, Any>) {
+        _authState.value = AuthState(isLoading = true)
+        val uid = _currentUser.value?.uid ?: return
+        try {
+            db.collection("users").document(uid).update(updatedData).await()
+            fetchUserData(uid)
+            _authState.value = AuthState(isLoading = false, isSuccess = true)
+        } catch (e: Exception) {
+            _authState.value = AuthState(isLoading = false, errorMessage = e.message)
+        }
+    }
 
     suspend fun isUserFollowing(targetUid: String): Boolean {
         val currentUid = _currentUser.value?.uid ?: return false
@@ -170,7 +186,6 @@ class AuthViewModel : ViewModel() {
         return doc.exists()
     }
 
-    // Takip Etme İşlemi
     suspend fun followUser(targetUid: String) {
         val currentUid = _currentUser.value?.uid ?: return
 
@@ -214,6 +229,7 @@ class AuthViewModel : ViewModel() {
 
         batch.commit().await()
     }
+
     suspend fun getFollowerCountFromSubcollection(uid: String): Long {
         return try {
             val snapshot = db.collection("users").document(uid)
@@ -239,12 +255,34 @@ class AuthViewModel : ViewModel() {
             0
         }
     }
+
+    // --- Gönderi Mekanizması ---
+
+    fun fetchAllPosts() {
+        viewModelScope.launch {
+            try {
+                // Tüm gönderileri zaman damgasına göre en yeniden eskiye doğru çek
+                val postsSnapshot = FirebaseFirestore.getInstance().collection("posts")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(50)
+                    .get().await()
+
+                _allPosts.value = postsSnapshot.toObjects(Post::class.java)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // --- Genel Fonksiyonlar ---
+
+    fun resetState() { _authState.value = AuthState() }
+    fun getCurrentUser() = _currentUser.value
+
     fun logout() {
         auth.signOut()
         _currentUser.value = null
         _userData.value = null
         _authState.value = AuthState()
     }
-
-
 }

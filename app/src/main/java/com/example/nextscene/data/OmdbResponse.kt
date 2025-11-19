@@ -12,3 +12,4 @@ data class OmdbResponse(
     val totalResults: String,
     val Response: String
 )
+
