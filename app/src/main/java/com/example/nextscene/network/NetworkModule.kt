@@ -1,17 +1,16 @@
 package com.example.nextscene.network
 
+import com.example.nextscene.BuildConfig
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
-
 object NetworkModule {
 
     private val json = Json { ignoreUnknownKeys = true }
     private const val BASE_URL = "https://www.omdbapi.com"
-    private const val API_KEY = "dff269fd"
 
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -29,5 +28,5 @@ object NetworkModule {
         retrofit.create(OmdbApiService::class.java)
     }
 
-    fun getApiKey(): String = API_KEY
+    fun getApiKey(): String = BuildConfig.OMDB_API_KEY
 }
