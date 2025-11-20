@@ -14,15 +14,12 @@ object SeriesWatchlistManager {
     private val firestore = FirebaseFirestore.getInstance()
     private val _currentUserId = MutableStateFlow<String?>(null)
 
-    // --- FAVORITES ---
     private val _favoriteSeriesIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteSeriesIds: StateFlow<Set<String>> = _favoriteSeriesIds.asStateFlow()
 
-    // --- WATCHED ---
     private val _watchedSeriesIds = MutableStateFlow<Set<String>>(emptySet())
     val watchedSeriesIds: StateFlow<Set<String>> = _watchedSeriesIds.asStateFlow()
 
-    // --- WATCHLIST (DAHA SONRA İZLE) - YENİ ---
     private val _watchlistSeriesIds = MutableStateFlow<Set<String>>(emptySet())
     val watchlistSeriesIds: StateFlow<Set<String>> = _watchlistSeriesIds.asStateFlow()
 
@@ -34,7 +31,7 @@ object SeriesWatchlistManager {
                 } else {
                     _favoriteSeriesIds.value = emptySet()
                     _watchedSeriesIds.value = emptySet()
-                    _watchlistSeriesIds.value = emptySet() // Reset watchlist
+                    _watchlistSeriesIds.value = emptySet()
                 }
             }
         }
@@ -47,20 +44,16 @@ object SeriesWatchlistManager {
     private fun loadWatchlistFromFirestore(userId: String) {
         val favoriteCollectionRef = firestore.collection("users").document(userId).collection("favoriteSeries")
         val watchedCollectionRef = firestore.collection("users").document(userId).collection("watchedSeries")
-        // YENİ KOLEKSİYON REFERANSI
         val watchlistCollectionRef = firestore.collection("users").document(userId).collection("watchlistSeries")
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Favorites Load
                 val favoritesSnapshot = favoriteCollectionRef.get().await()
                 _favoriteSeriesIds.value = favoritesSnapshot.documents.mapNotNull { it.id }.toSet()
 
-                // Watched Load
                 val watchedSnapshot = watchedCollectionRef.get().await()
                 _watchedSeriesIds.value = watchedSnapshot.documents.mapNotNull { it.id }.toSet()
 
-                // Watchlist Load (YENİ)
                 val watchlistSnapshot = watchlistCollectionRef.get().await()
                 _watchlistSeriesIds.value = watchlistSnapshot.documents.mapNotNull { it.id }.toSet()
 
@@ -133,7 +126,6 @@ object SeriesWatchlistManager {
 
         val currentWatchlist = _watchlistSeriesIds.value
         if (imdbID in currentWatchlist) {
-            // Listeden Çıkar
             watchlistDocRef.delete()
                 .addOnSuccessListener {
                     _watchlistSeriesIds.value = currentWatchlist - imdbID
@@ -142,7 +134,6 @@ object SeriesWatchlistManager {
                     println("Error removing watchlist series: $e")
                 }
         } else {
-            // Listeye Ekle
             val data = hashMapOf(
                 "seriesId" to imdbID,
                 "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()

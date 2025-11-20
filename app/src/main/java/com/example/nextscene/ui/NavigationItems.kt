@@ -1,7 +1,6 @@
 package com.example.nextscene.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -46,7 +45,7 @@ sealed class Screen(
     )
 
     object FollowList : Screen(
-        "followList/{uid}/{type}", // uid ve type (followers/following) parametreleri
+        "followList/{uid}/{type}",
         "Follow List",
         null,
         listOf(

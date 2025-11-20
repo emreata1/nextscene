@@ -34,9 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.Color
 
-// (Post, Movie, MovieDetail, NetworkModule vb. sınıfların import edildiği varsayılır)
 
-// Yardımcı Tür Sınıfı
 data class SearchType(val display: String, val omdbValue: String?)
 
 @Composable
@@ -48,12 +46,10 @@ fun NewPostDialog(
     val scope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
 
-    // --- Arama Durumları ---
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
     var searchResults by remember { mutableStateOf<List<Movie>?>(null) }
     var isSearching by remember { mutableStateOf(false) }
 
-    // --- YENİ: Tür Seçimi Durumları ---
     val searchTypes = remember {
         listOf(
             SearchType("Hepsi", null),
@@ -62,21 +58,16 @@ fun NewPostDialog(
         )
     }
     var selectedSearchType by remember { mutableStateOf(searchTypes[0]) } // Varsayılan: Hepsi
-
-    // --- Gönderi Durumları ---
     var postTitle by remember { mutableStateOf(TextFieldValue("")) }
     var reviewText by remember { mutableStateOf(TextFieldValue("")) }
     var rating by remember { mutableIntStateOf(5) }
     var selectedMediaDetail by remember { mutableStateOf<MovieDetail?>(null) }
     var isPosting by remember { mutableStateOf(false) }
-
-    // OMDB API Arama Fonksiyonu (GÜNCELLENDİ)
     val performSearch: (String, String?) -> Unit = { query, type ->
         if (query.length >= 3) {
             isSearching = true
             scope.launch {
                 try {
-                    // OMDB API'sine type parametresi eklendi
                     val response = NetworkModule.omdbApiService.searchMoviesWithType(
                         query = query,
                         apiKey = "b9bd48a6",
@@ -95,18 +86,7 @@ fun NewPostDialog(
         }
     }
 
-    // NOT: NetworkModule.omdbApiService interface'inize bu fonksiyonu eklemeyi unutmayın!
-    /*
-    interface OmdbApiService {
-        // ...
-        @GET("/")
-        suspend fun searchMoviesWithType(
-            @Query("s") query: String,
-            @Query("apikey") apiKey: String,
-            @Query("type") type: String? // Burası null/boş olursa tümünü getirir
-        ): SearchResponse
-    }
-    */
+
 
 
     Dialog(onDismissRequest = onDismiss) {
@@ -121,9 +101,7 @@ fun NewPostDialog(
                 Text("Yeni Gönderi Oluştur", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- 1. SEÇİM BÖLÜMÜ: ARAMA ve Tür Seçimi ---
                 if (selectedMediaDetail == null) {
-                    // Tür Seçimi UI'ı (İSTEĞE BAĞLI: Dropdown yerine SegmentedButton da kullanılabilir)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -148,7 +126,6 @@ fun NewPostDialog(
                                         onClick = {
                                             selectedSearchType = type
                                             expanded = false
-                                            // Tür değiştiğinde aramayı tetikle (eğer 3 karakterden uzunsa)
                                             performSearch(searchQuery.text, selectedSearchType.omdbValue)
                                         }
                                     )
@@ -158,12 +135,10 @@ fun NewPostDialog(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Arama Kutusu
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = {
                             searchQuery = it
-                            // Arama metni değiştiğinde seçili türe göre aramayı tetikle
                             performSearch(it.text, selectedSearchType.omdbValue)
                         },
                         label = { Text("Başlık Ara") },
@@ -178,7 +153,6 @@ fun NewPostDialog(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Arama Sonuçları Listesi
                     val results = searchResults
                     Box(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
                         if (results != null) {
@@ -221,16 +195,11 @@ fun NewPostDialog(
                     }
                 }
 
-                // Seçilen Film/Dizi Bilgisi
                 selectedMediaDetail?.let {
                     SelectedMediaCard(it, onRemove = { selectedMediaDetail = null })
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-
-                // --- 2. GÖNDERİ FORMU BÖLÜMÜ (Koşulsuz Görünür) ---
-
-                // PUANLAMA VE BAŞLIK
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -238,7 +207,6 @@ fun NewPostDialog(
                 ) {
                     Text("Puanınız: ${rating}/10", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
-                    // Puanlama Görseli
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         repeat(rating) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(24.dp))
@@ -249,7 +217,6 @@ fun NewPostDialog(
                     }
                 }
 
-                // Puanlama (Slider)
                 Slider(
                     value = rating.toFloat(),
                     onValueChange = { rating = it.toInt() },
@@ -260,8 +227,6 @@ fun NewPostDialog(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-
-                // Gönderi Başlığı
                 OutlinedTextField(
                     value = postTitle,
                     onValueChange = { postTitle = it },
@@ -272,7 +237,6 @@ fun NewPostDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Açıklama/Yorum
                 OutlinedTextField(
                     value = reviewText,
                     onValueChange = { reviewText = it },
@@ -282,7 +246,6 @@ fun NewPostDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Gönder Butonu
                 Button(
                     onClick = {
                         selectedMediaDetail?.let { media ->
@@ -307,7 +270,6 @@ fun NewPostDialog(
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    // Koşul: Medya seçili OLMALI ve Başlık boş OLMAMALI
                     enabled = selectedMediaDetail != null && postTitle.text.isNotBlank() && !isPosting
                 ) {
                     if (isPosting) { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) } else { Text("Paylaş") }
@@ -321,8 +283,6 @@ fun NewPostDialog(
         }
     }
 }
-
-// --- YARDIMCI COMPOSABLE'LAR (Aynı Kaldı) ---
 
 @Composable
 fun MovieSearchItem(movie: Movie, onSelect: (Movie) -> Unit) {
@@ -382,7 +342,6 @@ fun SelectedMediaCard(mediaDetail: MovieDetail, onRemove: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Poster
                 Card(modifier = Modifier.size(60.dp, 90.dp), shape = RoundedCornerShape(6.dp)) {
                     Image(
                         painter = rememberAsyncImagePainter(model = mediaDetail.Poster.takeIf { it != "N/A" }),
@@ -394,7 +353,6 @@ fun SelectedMediaCard(mediaDetail: MovieDetail, onRemove: () -> Unit) {
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Başlık
                 Column {
                     mediaDetail.Title?.let {
                         Text(
@@ -413,7 +371,6 @@ fun SelectedMediaCard(mediaDetail: MovieDetail, onRemove: () -> Unit) {
                 }
             }
 
-            // Kaldır Butonu
             IconButton(onClick = onRemove, colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer)) {
                 Icon(Icons.Default.Close, contentDescription = "Seçimi Kaldır")
             }

@@ -106,7 +106,6 @@ fun MainScreen() {
             composable("openProfile/{uid}") { backStackEntry ->
                 val uid = backStackEntry.arguments?.getString("uid")
                 if (uid != null) {
-                    // BURASI ÖNEMLİ: targetUid parametresini gönderiyoruz
                     OpenProfileScreen(
                         navController = navController,
                         targetUid = uid
@@ -114,7 +113,6 @@ fun MainScreen() {
                 }
             }
 
-            // Ayrıca kendi profilin için olan kısmı da kontrol et:
             composable(Screen.Auth.route) {
                 val currentUser = authViewModel.getCurrentUser()
                 if (currentUser == null) {
@@ -127,7 +125,6 @@ fun MainScreen() {
                         }
                     )
                 } else {
-                    // Kendi profilin olduğu için targetUid null veya kendi uid olabilir
                     OpenProfileScreen(navController = navController, targetUid = currentUser.uid)
                 }
             }
@@ -151,14 +148,11 @@ fun MainScreen() {
                 }
             }
 
-            // Diğer sayfaların (composable'ların) olduğu yere ekle:
             composable("post_detail/{postId}") { backStackEntry ->
                 val postId = backStackEntry.arguments?.getString("postId")
-                // Burada PostDetailScreen'i çağırın ve postId'yi geçirin
                 if (postId != null) {
                     PostDetailScreen(postId = postId, navController = navController)
                 } else {
-                    // Hata mesajı gösterebilirsiniz
                 }
             }
 
@@ -170,12 +164,10 @@ fun MainScreen() {
                     navArgument("pageTitle") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
-                // Parametreleri alıyoruz
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
                 val listType = backStackEntry.arguments?.getString("listType") ?: ""
                 val pageTitle = backStackEntry.arguments?.getString("pageTitle") ?: ""
 
-                // Ekranı çağırıyoruz
                 FullListScreen(
                     navController = navController,
                     userId = userId,

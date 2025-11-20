@@ -33,6 +33,18 @@ data class Post(
     val title: String = "",
     val reviewText: String = "",
     val rating: Int = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val likeCount: Int = 0,
+    val likedBy: List<String> = emptyList(),
+    val commentCount: Int = 0
+)
+
+data class Comment(
+    val commentId: String = "",
+    val postId: String = "",
+    val userId: String = "",
+    val username: String = "",
+    val text: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
 
@@ -66,7 +78,7 @@ fun OpenProfileScreen(
     var followLoading by remember { mutableStateOf(false) }
 
     var userPosts by remember { mutableStateOf(listOf<Post>()) }
-    var showNewPostDialog by remember { mutableStateOf(false) } // Yeni Gönderi Dialog'u
+    var showNewPostDialog by remember { mutableStateOf(false) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Gönderiler", "Listeler")

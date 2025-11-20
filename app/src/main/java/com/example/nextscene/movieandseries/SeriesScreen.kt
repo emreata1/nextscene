@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.nextscene.movieandseries.SeriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +35,6 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
             .padding(8.dp)
     ) {
 
-        // 🔍 Arama Kutusu
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -66,7 +64,6 @@ fun SeriesScreen(navController: NavController, viewModel: SeriesViewModel = view
                 .padding(bottom = 12.dp)
         )
 
-        // 📺 Dizi Listesi
         if (series.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "Dizi bulunamadı.")

@@ -40,14 +40,11 @@ import com.example.nextscene.auth.AuthViewModel
 
 @Composable
 fun SeriesDetailScreen(
-    // The authViewModel is now passed to the SeriesDetailViewModel via the factory
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // Create the SeriesDetailViewModel using a custom factory to inject AuthViewModel
     val viewModel: SeriesDetailViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
-                // Access SavedStateHandle from the initializer scope
                 SeriesDetailViewModel(
                     savedStateHandle = createSavedStateHandle(),
                     authViewModel = authViewModel
@@ -70,14 +67,12 @@ fun SeriesDetailScreen(
             Row(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.Start // ÖNEMLİ: İçindekileri sola (başa) yasla
+                horizontalArrangement = Arrangement.Start
             ) {
                 val posterUrl = detail.Poster
                 val isPosterValid = posterUrl != "N/A" && posterUrl?.isNotBlank() == true
 
                 if (isPosterValid) {
-                    // Resim yükleyici
-
                         Image(
                             painter = rememberAsyncImagePainter(
                                 model = ImageRequest.Builder(LocalContext.current)
@@ -96,7 +91,6 @@ fun SeriesDetailScreen(
 
 
                 } else {
-                    // Resim yoksa (N/A) Gri Kutu ve İkon
                     Box(
                         modifier = Modifier
                             .height(200.dp)
@@ -158,14 +152,10 @@ fun SeriesDetailScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // -----------------------------------
-            // 1. SATIR: Favorilere Ekle & İzlendi Butonları
-            // -----------------------------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp) // Butonlar arası boşluk
             ) {
-                // --- FAVORİ BUTONU ---
                 Button(
                     modifier = Modifier
                         .weight(1f)
@@ -196,7 +186,6 @@ fun SeriesDetailScreen(
                     )
                 }
 
-                // --- İZLENDİ BUTONU ---
                 Button(
                     modifier = Modifier
                         .weight(1f)
@@ -230,16 +219,14 @@ fun SeriesDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp)) // Dikey boşluk
 
-            // -----------------------------------
-            // 2. SATIR: Daha Sonra İzle Butonu
-            // -----------------------------------
+
             Button(
                 modifier = Modifier
-                    .fillMaxWidth() // Tam genişlik
-                    .height(50.dp), // Diğerleriyle aynı yükseklik
+                    .fillMaxWidth()
+                    .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
                 onClick = {
-                    viewModel.toggleWatchlist() // Bu fonksiyonu ViewModel'a eklemelisin
+                    viewModel.toggleWatchlist()
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (detail.isInWatchlist) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,

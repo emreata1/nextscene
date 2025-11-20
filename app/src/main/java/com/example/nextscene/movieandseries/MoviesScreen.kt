@@ -35,7 +35,6 @@ fun MoviesScreen(navController: NavController, viewModel: MoviesViewModel = view
             .padding(8.dp)
     ) {
 
-        // 🔍 Arama Kutusu
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -65,7 +64,6 @@ fun MoviesScreen(navController: NavController, viewModel: MoviesViewModel = view
                 .padding(bottom = 12.dp)
         )
 
-        // 🎬 Film Listesi
         if (films.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "Film bulunamadı.")

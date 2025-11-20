@@ -14,15 +14,12 @@ object MovieWatchlistManager {
     private val firestore = FirebaseFirestore.getInstance()
     private val _currentUserId = MutableStateFlow<String?>(null)
 
-    // --- FAVORITES ---
     private val _favoriteMovieIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteMovieIds: StateFlow<Set<String>> = _favoriteMovieIds.asStateFlow()
 
-    // --- WATCHED ---
     private val _watchedMovieIds = MutableStateFlow<Set<String>>(emptySet())
     val watchedMovieIds: StateFlow<Set<String>> = _watchedMovieIds.asStateFlow()
 
-    // --- WATCHLIST (DAHA SONRA İZLE) - YENİ EKLENDİ ---
     private val _watchlistMovieIds = MutableStateFlow<Set<String>>(emptySet())
     val watchlistMovieIds: StateFlow<Set<String>> = _watchlistMovieIds.asStateFlow()
 
@@ -35,7 +32,7 @@ object MovieWatchlistManager {
                 } else {
                     _favoriteMovieIds.value = emptySet()
                     _watchedMovieIds.value = emptySet()
-                    _watchlistMovieIds.value = emptySet() // Reset watchlist
+                    _watchlistMovieIds.value = emptySet()
                 }
             }
         }
@@ -48,20 +45,16 @@ object MovieWatchlistManager {
     private fun loadWatchlistFromFirestore(userId: String) {
         val favoriteCollectionRef = firestore.collection("users").document(userId).collection("favoriteMovies")
         val watchedCollectionRef = firestore.collection("users").document(userId).collection("watchedMovies")
-        // Yeni referans
         val watchlistCollectionRef = firestore.collection("users").document(userId).collection("watchlistMovies")
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Favorites load
                 val favoritesSnapshot = favoriteCollectionRef.get().await()
                 _favoriteMovieIds.value = favoritesSnapshot.documents.mapNotNull { it.id }.toSet()
 
-                // Watched load
                 val watchedSnapshot = watchedCollectionRef.get().await()
                 _watchedMovieIds.value = watchedSnapshot.documents.mapNotNull { it.id }.toSet()
 
-                // Watchlist load (YENİ)
                 val watchlistSnapshot = watchlistCollectionRef.get().await()
                 _watchlistMovieIds.value = watchlistSnapshot.documents.mapNotNull { it.id }.toSet()
 
@@ -119,21 +112,18 @@ object MovieWatchlistManager {
         }
     }
 
-    // --- YENİ FONKSİYON: TOGGLE WATCHLIST ---
     fun toggleWatchlist(imdbID: String) {
         val userId = _currentUserId.value ?: return
         val watchlistDocRef = firestore.collection("users").document(userId).collection("watchlistMovies").document(imdbID)
 
         val currentWatchlist = _watchlistMovieIds.value
         if (imdbID in currentWatchlist) {
-            // Listeden çıkar
             watchlistDocRef.delete()
                 .addOnSuccessListener {
                     _watchlistMovieIds.value = currentWatchlist - imdbID
                 }
                 .addOnFailureListener { e -> println("Error removing form watchlist: $e") }
         } else {
-            // Listeye ekle
             val data = hashMapOf(
                 "movieId" to imdbID,
                 "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()

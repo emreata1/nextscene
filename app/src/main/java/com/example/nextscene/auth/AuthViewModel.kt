@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Query
 
-// --- Veri Sınıfları (ViewModel'in kullandığı ve UI'a sağladığı durumlar) ---
 
 data class AuthState(
     val isLoading: Boolean = false,
@@ -25,7 +24,6 @@ data class AuthState(
     val errorMessage: String? = null
 )
 
-// UserData sınıfı (Kayıt hatasına neden olan döngüsel alanlar çıkarılmıştır)
 data class UserData(
     val uid: String = "",
     val email: String = "",
@@ -37,11 +35,10 @@ data class UserData(
     val role: String = "",
     val createdAt: Timestamp? = null,
     val profileImageUrl: String = "",
-    val followerCount: Long = 0, // Takip işlemleri için eklenmiştir
-    val followingCount: Long = 0  // Takip işlemleri için eklenmiştir
+    val followerCount: Long = 0,
+    val followingCount: Long = 0
 )
 
-// -------------------------------------------------------------------------
 
 class AuthViewModel : ViewModel() {
 
@@ -95,7 +92,6 @@ class AuthViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Not: username alanında index oluşturulmuş olmalıdır.
                 val snapshot = db.collection("users")
                     .whereGreaterThanOrEqualTo("username", query)
                     .whereLessThanOrEqualTo("username", query + "\uf8ff")
@@ -114,12 +110,10 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Kullanıcı Kaydı ve Girişi ---
 
     suspend fun registerUser(email: String, password: String, username: String) {
         _authState.value = AuthState(isLoading = true)
         try {
-            // 1. Kullanıcı Adı Kontrolü
             val usernameQuery = db.collection("users")
                 .whereEqualTo("username", username)
                 .get()
@@ -127,11 +121,8 @@ class AuthViewModel : ViewModel() {
 
             if (!usernameQuery.isEmpty) throw Exception("Bu kullanıcı adı zaten alınmış.")
 
-            // 2. Firebase Auth Kullanıcısını Oluştur
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            // Hata yoksa UID alınır.
             val uid = result.user?.uid ?: throw Exception("UID alınamadı")
-            // 3. Firestore'a Profil Verisini Kaydet
             val userData = hashMapOf(
                 "uid" to uid,
                 "email" to email,
@@ -147,7 +138,6 @@ class AuthViewModel : ViewModel() {
                 "followingCount" to 0L  // İlk değer
             )
 
-            // Kayıt kuralı: allow create: if request.auth != null && request.auth.uid == userId;
             db.collection("users").document(uid).set(userData).await() // <-- Buradaki UID, kuraldaki {userId} ile eşleşmeli            _authState.value = AuthState(isLoading = false, isSuccess = true)
 
         } catch (e: Exception) {
@@ -165,7 +155,6 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Takip Mekanizmaları ---
 
     suspend fun updateUserData(updatedData: Map<String, Any>) {
         _authState.value = AuthState(isLoading = true)
@@ -256,12 +245,10 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Gönderi Mekanizması ---
 
     fun fetchAllPosts() {
         viewModelScope.launch {
             try {
-                // Tüm gönderileri zaman damgasına göre en yeniden eskiye doğru çek
                 val postsSnapshot = FirebaseFirestore.getInstance().collection("posts")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
                     .limit(50)
@@ -274,7 +261,6 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Genel Fonksiyonlar ---
 
     fun resetState() { _authState.value = AuthState() }
     fun getCurrentUser() = _currentUser.value

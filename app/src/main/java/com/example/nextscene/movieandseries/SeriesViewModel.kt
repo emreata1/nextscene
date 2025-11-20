@@ -14,7 +14,7 @@ class SeriesViewModel : ViewModel() {
     val series: StateFlow<List<Movie>> = _series
 
     init {
-        fetchSeries("spider") // Örnek arama sorgusu
+        fetchSeries("spider")
     }
 
     fun fetchSeries(query: String) {
@@ -23,7 +23,6 @@ class SeriesViewModel : ViewModel() {
                 val response = NetworkModule.omdbApiService.searchMovies(query, apiKey = NetworkModule.getApiKey())
                 _series.value = response.Search
             } catch (e: Exception) {
-                // Hata yönetimi
                 e.printStackTrace()
             }
         }

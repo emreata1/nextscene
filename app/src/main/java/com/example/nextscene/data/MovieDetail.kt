@@ -3,7 +3,6 @@
 package com.example.nextscene.data
 
 import android.annotation.SuppressLint
-import android.text.BoringLayout
 import kotlinx.serialization.Serializable
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -16,7 +15,7 @@ data class Rating(
 @SuppressLint("UnsafeOptInUsageError")
 @Serializable
 data class MovieDetail(
-    val Title: String?,        // Başlık bazen eksik gelebilir
+    val Title: String?,
     val Year: String?,
     val Rated: String?,
     val Released: String?,
@@ -29,19 +28,17 @@ data class MovieDetail(
     val Language: String?,
     val Country: String?,
     val Awards: String?,
-    val Poster: String?,       // API'den "N/A" veya null gelebilir. Çökmenin en olası sebebi buydu.
-    val Ratings: List<Rating>? = emptyList(), // Artık null gelirse sorun olmaz    val Metascore: String? = null,    // Varsayılan değeri String? yaparken null olarak ayarlayalım
+    val Poster: String?,
+    val Ratings: List<Rating>? = emptyList(),
     val imdbRating: String?,
     val imdbVotes: String?,
-    val imdbID: String,        // Bu genellikle non-null'dır
+    val imdbID: String,
     val Type: String?,
     val DVD: String? = null,
     val BoxOffice: String? = null,
     val Production: String? = null,
     val Website: String? = null,
     val Response: String?,
-
-    // UI durumları için bu alanlar sorun yaratmaz
     var isFavorite: Boolean = false,
     var isWatched: Boolean = false,
     var isInWatchlist: Boolean = false

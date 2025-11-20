@@ -47,21 +47,18 @@ fun PostDetailScreen(
         isLoading = true
         errorMessage = null
         try {
-            // 1. Gönderi verisini çek
             val postDoc = db.collection("posts").document(postId).get().await()
             val fetchedPost = postDoc.toObject(Post::class.java)
 
             if (fetchedPost != null) {
                 post = fetchedPost
 
-                // 2. Medya Detaylarını Çek
                 val media = NetworkModule.omdbApiService.getMovieDetail(
                     imdbID = fetchedPost.mediaId,
                     apiKey = "b9bd48a6"
                 )
                 mediaDetail = media
 
-                // 3. Kullanıcı Verisini Çek
                 val userDoc = db.collection("users").document(fetchedPost.userId).get().await()
                 postOwner = userDoc.toObject(UserData::class.java)
 
@@ -105,12 +102,10 @@ fun PostDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // --- 1. GÖNDERİ SAHİBİ (Üst Kısım) ---
                 PostOwnerHeader(postOwner!!, navController)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- 2. GÖNDERİ BAŞLIĞI ve YORUM ---
                 Text(
                     text = post!!.title,
                     style = MaterialTheme.typography.headlineMedium,
@@ -127,7 +122,6 @@ fun PostDetailScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- 3. MEDYA VE PUAN BİLGİSİ ---
                 mediaDetail?.let { media ->
                     MediaDetailCard(post!!, media)
                 } ?: run {
@@ -138,9 +132,6 @@ fun PostDetailScreen(
     }
 }
 
-// -----------------------------------------------------------------------------------------
-// --- YARDIMCI COMPOSABLE'LAR ---
-// -----------------------------------------------------------------------------------------
 
 @Composable
 fun PostOwnerHeader(userData: UserData, navController: NavController) {
@@ -151,7 +142,6 @@ fun PostOwnerHeader(userData: UserData, navController: NavController) {
             ,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Profil Resmi
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -174,7 +164,6 @@ fun PostOwnerHeader(userData: UserData, navController: NavController) {
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Kullanıcı Adı ve İsim
         Column {
             Text(
                 text = userData.username,
@@ -196,7 +185,6 @@ fun MediaDetailCard(post: Post, media: MovieDetail) {
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
-            // Medya Posteri
             Image(
                 painter = rememberAsyncImagePainter(media.Poster),
                 contentDescription = media.Title,
@@ -207,9 +195,7 @@ fun MediaDetailCard(post: Post, media: MovieDetail) {
             )
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Detaylar ve Puan
             Column(modifier = Modifier.weight(1f)) {
-                // Film/Dizi Başlığı
                 media.Title?.let {
                     Text(
                         it,
@@ -217,15 +203,12 @@ fun MediaDetailCard(post: Post, media: MovieDetail) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                // Tür ve Yıl
                 val mediaType = media.Type?.replaceFirstChar { it.uppercase() } ?: "İçerik"
                 val releaseInfo = if (media.Year.isNullOrBlank()) mediaType else "${mediaType}, ${media.Year}"
                 Text(releaseInfo, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                // Kullanıcının Puanı
                 Text(
                     text = "VERDİĞİNİZ PUAN",
                     style = MaterialTheme.typography.labelSmall,
@@ -239,7 +222,6 @@ fun MediaDetailCard(post: Post, media: MovieDetail) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // IMDb Puanı (Ek bilgi)
                 media.imdbRating?.let { imdbRating ->
                     Text(
                         text = "IMDb Puanı: $imdbRating",
@@ -249,7 +231,6 @@ fun MediaDetailCard(post: Post, media: MovieDetail) {
                 }
             }
         }
-        // Medyanın Tam Özetini alt kısma ekleyebiliriz
         media.Plot?.let { plot ->
             if (plot != "N/A" && plot.isNotBlank()) {
                 Text(

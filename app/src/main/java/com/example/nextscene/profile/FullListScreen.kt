@@ -132,7 +132,7 @@ fun FullListScreen(
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 100.dp), // Ekran boyutuna göre sığdırır
+                    columns = GridCells.Adaptive(minSize = 100.dp),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -141,7 +141,6 @@ fun FullListScreen(
                         Column(
                             modifier = Modifier
                                 .clickable {
-                                    // Detaya Git
                                     val route = if (item.Type == "series") "detailseries/${item.imdbID}" else "detailmovie/${item.imdbID}"
                                     navController.navigate(route)
                                 },
@@ -152,7 +151,7 @@ fun FullListScreen(
                                 contentDescription = item.Title,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .aspectRatio(0.67f) // Poster oranı
+                                    .aspectRatio(0.67f)
                                     .clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )

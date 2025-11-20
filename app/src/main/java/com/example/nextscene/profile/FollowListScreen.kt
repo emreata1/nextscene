@@ -20,7 +20,7 @@ import kotlinx.coroutines.tasks.await
 fun FollowListScreen(
     navController: NavController,
     targetUid: String,
-    listType: String // "followers" veya "following"
+    listType: String
 ) {
     val db = FirebaseFirestore.getInstance()
     var userList by remember { mutableStateOf<List<UserData>>(emptyList()) }
@@ -31,15 +31,12 @@ fun FollowListScreen(
     LaunchedEffect(targetUid, listType) {
         isLoading = true
         try {
-            // 1. İlgili koleksiyondaki döküman ID'lerini (kullanıcı ID'leri) çek
             val collectionRef = db.collection("users").document(targetUid).collection(listType)
             val snapshot = collectionRef.get().await()
             val userIds = snapshot.documents.map { it.id }
 
             if (userIds.isNotEmpty()) {
-                // 2. Bu ID'lere sahip kullanıcıların detaylarını 'users' koleksiyonundan çek
-                // (Firestore'da 'in' sorgusu en fazla 10 eleman alır, bu yüzden tek tek veya chunk ile çekmek daha güvenli olabilir ama şimdilik basit tutalım)
-                // En temiz yöntem: Her ID için belgeyi çekmek
+
                 val users = mutableListOf<UserData>()
                 for (uid in userIds) {
                     val userDoc = db.collection("users").document(uid).get().await()
@@ -53,7 +50,6 @@ fun FollowListScreen(
                 userList = emptyList()
             }
         } catch (e: Exception) {
-            // Hata yönetimi
         } finally {
             isLoading = false
         }
@@ -82,11 +78,9 @@ fun FollowListScreen(
         } else {
             LazyColumn(modifier = Modifier.padding(padding)) {
                 items(userList) { user ->
-                    // TimelineScreen'de kullandığımız UserSearchResultItem'ı burada tekrar kullanabiliriz!
                     UserSearchResultItem(
                         user = user,
                         onClick = {
-                            // Listeden birine tıklayınca onun profiline git
                             navController.navigate("openProfile/${user.uid}")
                         }
                     )

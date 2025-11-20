@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.nextscene.R
-// Removed unused CoroutineScope, Dispatchers, launch imports
 import kotlin.math.floor
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -42,14 +41,12 @@ import com.example.nextscene.auth.AuthViewModel
 
 @Composable
 fun MovieDetailScreen(
-    // The authViewModel is now passed to the MovieDetailViewModel via the factory
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // Create the MovieDetailViewModel using a custom factory to inject AuthViewModel
     val viewModel: MovieDetailViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
-                // Access SavedStateHandle from the initializer scope
+
                 MovieDetailViewModel(
                     savedStateHandle = createSavedStateHandle(),
                     authViewModel = authViewModel
@@ -59,7 +56,6 @@ fun MovieDetailScreen(
     )
 
     val movieDetail by viewModel.movieDetail.collectAsState()
-    // val currentUser = authViewModel.getCurrentUser() // No longer directly used for toggling, kept for other potential uses
 
     Column(
         modifier = Modifier
@@ -78,34 +74,31 @@ fun MovieDetailScreen(
                 val isPosterValid = posterUrl != "N/A" && posterUrl?.isNotBlank() == true
 
                 if (isPosterValid) {
-                    // Resim varsa normal şekilde göster
                     Image(
                         painter = rememberAsyncImagePainter(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(posterUrl)
                                 .crossfade(true)
-                                .error(R.drawable.ic_broken_image) // Hata olursa (opsiyonel, yoksa silebilirsin)
-                                .build()
+                                .error(R.drawable.ic_broken_image)
                         ),
                         contentDescription = "Movie Poster",
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .height(200.dp)
-                            .width(135.dp), // Sabit genişlik vermek görüntüyü korur (yaklaşık 2:3 oranı)
+                            .width(135.dp),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Resim yoksa (N/A) Gri Kutu ve İkon göster
                     Box(
                         modifier = Modifier
                             .height(200.dp)
                             .width(135.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant), // Hafif gri arka plan
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Movie, // Film ikonu
+                            imageVector = Icons.Filled.Movie,
                             contentDescription = "No Poster",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(50.dp)
@@ -134,10 +127,10 @@ fun MovieDetailScreen(
             detail.Plot?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
             Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider( // Changed Divider to HorizontalDivider
+            HorizontalDivider(
                 modifier = Modifier.padding(bottom = 16.dp),
-                thickness = DividerDefaults.Thickness, // Added thickness
-                color = DividerDefaults.color // Added color
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "IMDb Rating: ", style = MaterialTheme.typography.bodyLarge)
@@ -145,10 +138,10 @@ fun MovieDetailScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 detail.imdbRating?.let { Text(text = it, style = MaterialTheme.typography.bodyLarge) }
             }
-            HorizontalDivider( // Changed Divider to HorizontalDivider
+            HorizontalDivider(
                 modifier = Modifier.padding(top = 16.dp),
-                thickness = DividerDefaults.Thickness, // Added thickness
-                color = DividerDefaults.color // Added color
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
             )
             Text(text = "Rated: ${detail.Rated}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Director: ${detail.Director}", style = MaterialTheme.typography.bodyLarge)
@@ -156,18 +149,11 @@ fun MovieDetailScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // -----------------------------------
-            // Favorilere Ekle & İzlendi Butonları
-            // -----------------------------------
 
-            // -----------------------------------
-            // Favorilere Ekle & İzlendi Butonları (1. SATIR)
-            // -----------------------------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // --- FAVORİ BUTONU ---
                 Button(
                     modifier = Modifier
                         .weight(1f)
@@ -198,7 +184,6 @@ fun MovieDetailScreen(
                     )
                 }
 
-                // --- İZLENDİ BUTONU ---
                 Button(
                     modifier = Modifier
                         .weight(1f)
@@ -232,26 +217,20 @@ fun MovieDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp)) // Butonlar arası dikey boşluk
 
-            // -----------------------------------
-            // Daha Sonra İzle Butonu (2. SATIR - Tam Genişlik)
-            // -----------------------------------
-            // Not: detail.isWatchlist ve viewModel.toggleWatchlist() fonksiyonlarını
-            // ViewModel ve Data class'ına eklemeyi unutma.
+
             Button(
                 modifier = Modifier
-                    .fillMaxWidth() // Ekranı kaplasın
-                    .height(50.dp), // Diğerleriyle aynı yükseklik
+                    .fillMaxWidth()
+                    .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
                 onClick = {
-                    viewModel.toggleWatchlist() // ViewModel'da bu fonksiyonu oluşturmalısın
+                    viewModel.toggleWatchlist()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    // Farklı bir renk tonu kullanabilirsin, örneğin SurfaceVariant veya PrimaryContainer
                     containerColor = if (detail.isInWatchlist) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (detail.isInWatchlist) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                // İkon Seçimi: Bookmark (Ayraç) genelde Watchlist için kullanılır
                 Icon(
                     imageVector = if (detail.isInWatchlist) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder, // Import etmeyi unutma
                     contentDescription = null,

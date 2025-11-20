@@ -24,6 +24,6 @@ interface OmdbApiService {
     suspend fun searchMoviesWithType(
         @Query("s") query: String,
         @Query("apikey") apiKey: String,
-        @Query("type") type: String? // Movie, Series, Episode veya null (hepsi)
-    ): OmdbResponse // SearchResponse içinde List<Movie> var
+        @Query("type") type: String?
+    ): OmdbResponse
 }

@@ -51,7 +51,6 @@ fun AuthScreen(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Kayıt modundaysa kullanıcı adı alanını göster
         if (isRegisterMode) {
             OutlinedTextField(
                 value = username,

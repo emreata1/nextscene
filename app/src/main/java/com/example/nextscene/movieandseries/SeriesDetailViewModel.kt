@@ -23,17 +23,16 @@ class SeriesDetailViewModel(
     private val _rawMovieDetail = MutableStateFlow<MovieDetail?>(null)
     private var currentImdbID: String? = null
 
-    // combine artık 4 parametre alıyor: Detay + Favoriler + İzlenenler + Watchlist (YENİ)
     val movieDetail: StateFlow<MovieDetail?> = combine(
         _rawMovieDetail,
         SeriesWatchlistManager.favoriteSeriesIds,
         SeriesWatchlistManager.watchedSeriesIds,
-        SeriesWatchlistManager.watchlistSeriesIds // YENİ: Watchlist akışını ekledik
+        SeriesWatchlistManager.watchlistSeriesIds
     ) { rawDetail, favoriteIds, watchedIds, watchlistIds ->
         rawDetail?.copy(
             isFavorite = favoriteIds.contains(rawDetail.imdbID),
             isWatched = watchedIds.contains(rawDetail.imdbID),
-            isInWatchlist = watchlistIds.contains(rawDetail.imdbID) // YENİ: Watchlist durumunu kontrol et
+            isInWatchlist = watchlistIds.contains(rawDetail.imdbID)
         )
     }.stateIn(
         scope = viewModelScope,
@@ -77,7 +76,6 @@ class SeriesDetailViewModel(
         }
     }
 
-    // YENİ: Watchlist Toggle Fonksiyonu
     fun toggleWatchlist() {
         _rawMovieDetail.value?.let { currentDetail ->
             SeriesWatchlistManager.toggleWatchlist(currentDetail.imdbID)
