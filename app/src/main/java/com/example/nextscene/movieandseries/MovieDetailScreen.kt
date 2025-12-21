@@ -75,11 +75,13 @@ fun MovieDetailScreen(
 
                 if (isPosterValid) {
                     Image(
+                        // ✅ Düzeltilmiş Kod: .build() eklendi
                         painter = rememberAsyncImagePainter(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(posterUrl)
                                 .crossfade(true)
                                 .error(R.drawable.ic_broken_image)
+                                .build() // <-- Buraya .build() eklenmeli
                         ),
                         contentDescription = "Movie Poster",
                         modifier = Modifier
